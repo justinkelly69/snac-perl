@@ -1,8 +1,10 @@
 #!/home/jk/opt/perl/bin/perl
 
 use Data::Dumper;
+use JSON::MaybeXS qw(encode_json decode_json);
 
 require "./attributes.pl";
+require "./text.pl";
 
 $input = "xml/waffle.xml";
 $jsonOut = "out/snac.json";
@@ -15,7 +17,8 @@ my @prefix = ();
 close $fh;
 
 my $data = parseXML($xml);
-my $snac = Data::Dumper->Dump([$data->{out}], [qw(out)]);
+#my $snac = Data::Dumper->Dump([$data->{out}], [qw(out)]);
+my $snac = encode_json($data->{out});
 open my $jsonFh, '>', $jsonOut;
 print $jsonFh $snac;
 close $jsonFh;
@@ -138,7 +141,7 @@ sub parseXML {
 			push(
 				@out,
 				{
-					T => $text
+					T => unEscapeHtml($text)
 				}
 			);
 			$xml = $2;
@@ -207,7 +210,8 @@ sub snac2xml {
 			$out .= "\n$prefix<?$_->{L} $_->{B}?>";
 
 		}elsif($_->{T}){
-			$out .= "\n$prefix$_->{T}";
+			my $text = escapeHtml($_->{T});
+			$out .= "\n${prefix}${text}";
 		}
 	}
 

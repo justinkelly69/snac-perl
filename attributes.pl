@@ -82,6 +82,7 @@ sub getAttributeValue {
 		if(substr($xml, $i, 1) =~ m!^$quoteChar$! && substr($xml, $i - 1, 1) !~ m!^\\$!) {
 			$value = substr($xml, 0, $i);
 			$value =~ s!\\$quoteChar!$quoteChar!g;
+			$value = unEscapeHtml($value);
 
 			#print("$value$quoteChar\n");
 			$xml = substr($xml, $i + 1);
@@ -108,9 +109,11 @@ sub attributesToXML {
 		my %ns = %{$atts->{$ns}};
 		foreach $name (keys %ns) {
 			if($ns == '@'){
-				$out .= "\n${prefix}${attPrefix}${name}=\"$atts->{$ns}->{$name}\"";
+				my $value = escapeHtml($atts->{$ns}->{$name});
+				$out .= "\n${prefix}${attPrefix}${name}=\"$value\"";
 			} else {
-				$out .= "\n${prefix}${attPrefix}${ns}:${name}=\"$atts->{$ns}->{$name}\"";
+				my $value = escapeHtml($atts->{$ns}->{$name});
+				$out .= "\n${prefix}${attPrefix}${ns}:${name}=\"$value\"";
 			}
 		}
 	}
