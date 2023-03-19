@@ -8,8 +8,6 @@ sub getAttributes {
 
 		# CLOSE EMPTY ATTRIBUTE
 		if($xml =~ m!^\s*/>(.*)$!s){
-
-			#print "CLOSE EMPTY ATTRIBUTE\n";
 			return {
 				xml => $1,
 				kids => 0,
@@ -19,7 +17,6 @@ sub getAttributes {
 
 		# CLOSE ATTRIBUTE
 		elsif($xml =~ m!^\s*>(.*)$!s){ # create child array
-			 #print "CLOSE ATTRIBUTE\n";
 			return {
 				xml => $1,
 				kids => 1,
@@ -29,8 +26,6 @@ sub getAttributes {
 
 		# OPEN ATTRIBUTE
 		elsif($xml =~ m!^\s*([\w]+:?[\w]+)=(['"])(.*)$!s){
-
-			#print("$1=$2");
 			my $att = attribute(\%attributes, $1, $2, $3);
 			$attributes = $att->{attributes};
 			$xml = $att->{xml};
@@ -54,14 +49,10 @@ sub attribute {
 		if(!exists $attributes->{'@'}){
 			$attributes->{'@'} = {};
 		}
-
-		#print("\nNAMESTR $nameStr\n");
 		$attributes->{'@'}->{$nameStr} = $attVal->{value};
 	}else {
 		$ns = substr($nameStr, 0, $colonIndex);
 		$name = substr($nameStr, $colonIndex + 1);
-
-		#print("\nNS $ns, NAME $name\n");
 		if(!exists $attributes->{$ns}){
 			$attributes->{$ns} = {};
 		}
@@ -83,8 +74,6 @@ sub getAttributeValue {
 			$value = substr($xml, 0, $i);
 			$value =~ s!\\$quoteChar!$quoteChar!g;
 			$value = unEscapeHtml($value);
-
-			#print("$value$quoteChar\n");
 			$xml = substr($xml, $i + 1);
 			$correct = 1;
 			last;
