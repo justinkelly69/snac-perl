@@ -6,6 +6,10 @@
 *.o
 *.pm.tdy
 *.bs
+.vscode/
+
+out.txt
+out/
 
 # Devel::Cover
 cover_db/

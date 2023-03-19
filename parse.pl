@@ -5,6 +5,8 @@ use Data::Dumper;
 require "./attributes.pl";
 
 $input = "xml/waffle.xml";
+$jsonOut = "out/snac.json";
+$xmlOut = "out/snac.xml";
 
 open my $fh, '<', $input;
 $/ = undef;
@@ -13,7 +15,15 @@ my @prefix = ();
 close $fh;
 
 my $data = parseXML($xml);
-print Data::Dumper->Dump([$data->{out}], [qw(out)]);
+my $snac = Data::Dumper->Dump([$data->{out}], [qw(out)]);
+open my $jsonFh, '>', $jsonOut;
+print $jsonFh $snac;
+close $jsonFh;
+
+my $xml = snac2xml($data->{out}, "", "\t", '  ');
+open my $xmlFh, '>', $xmlOut;
+print $xmlFh $xml;
+close $xmlFh;
 
 sub parseXML {
 	my ($xml) = @_;
@@ -155,7 +165,51 @@ sub parseXML {
 	return {
 		xml => $xml,
 		out => \@out
-	}
+	};
 }
 
 
+sub snac2xml {
+	my($snac, $prefix, $prefixChar, $attPrefix) = @_;
+
+	my $out;
+
+	foreach (@{$snac}){
+
+		if($_->{N}){
+			my $ns = $_->{S};
+			my $name = $_->{N};
+			my $attributes = attributesToXML($_->{A}, "${prefix}${prefixChar}", $attPrefix);
+			my $children = $_->{C};
+
+			my $tagName;
+
+			if($ns eq '@'){
+				$tagName = "$name";
+			}else {
+				$tagName = "$ns:$name";
+			}
+			$out .= "\n$prefix<$tagName $attributes";
+
+			if(@$children > 0){
+				$out .= ">\n" .snac2xml($children, "${prefix}${prefixChar}", $prefixChar, $attPrefix) ."\n$prefix</$tagName>";
+			}else {
+				$out .= "/>\n";
+			}
+
+		}elsif($_->{D}){
+			$out .= "\n$prefix<![CDATA[$_->{D}]]>";
+
+		}elsif($_->{M}){
+			$out .= "\n$prefix<!--$_->{M}-->";
+
+		}elsif($_->{L}){
+			$out .= "\n$prefix<?$_->{L} $_->{B}?>";
+
+		}elsif($_->{T}){
+			$out .= "\n$prefix$_->{T}";
+		}
+	}
+
+	return $out;
+}

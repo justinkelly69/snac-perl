@@ -8,6 +8,7 @@ sub getAttributes {
 
 		# CLOSE EMPTY ATTRIBUTE
 		if($xml =~ m!^\s*/>(.*)$!s){
+
 			#print "CLOSE EMPTY ATTRIBUTE\n";
 			return {
 				xml => $1,
@@ -18,7 +19,7 @@ sub getAttributes {
 
 		# CLOSE ATTRIBUTE
 		elsif($xml =~ m!^\s*>(.*)$!s){ # create child array
-			#print "CLOSE ATTRIBUTE\n";
+			 #print "CLOSE ATTRIBUTE\n";
 			return {
 				xml => $1,
 				kids => 1,
@@ -28,6 +29,7 @@ sub getAttributes {
 
 		# OPEN ATTRIBUTE
 		elsif($xml =~ m!^\s*([\w]+:?[\w]+)=(['"])(.*)$!s){
+
 			#print("$1=$2");
 			my $att = attribute(\%attributes, $1, $2, $3);
 			$attributes = $att->{attributes};
@@ -80,6 +82,7 @@ sub getAttributeValue {
 		if(substr($xml, $i, 1) =~ m!^$quoteChar$! && substr($xml, $i - 1, 1) !~ m!^\\$!) {
 			$value = substr($xml, 0, $i);
 			$value =~ s!\\$quoteChar!$quoteChar!g;
+
 			#print("$value$quoteChar\n");
 			$xml = substr($xml, $i + 1);
 			$correct = 1;
@@ -94,6 +97,25 @@ sub getAttributeValue {
 		value => $value,
 		xml => $xml
 	};
+}
+
+
+sub attributesToXML {
+	my($atts, $prefix, $attPrefix) = @_;
+	my $out = "";
+
+	foreach $ns (keys %$atts){
+		my %ns = %{$atts->{$ns}};
+		foreach $name (keys %ns) {
+			if($ns == '@'){
+				$out .= "\n${prefix}${attPrefix}${name}=\"$atts->{$ns}->{$name}\"";
+			} else {
+				$out .= "\n${prefix}${attPrefix}${ns}:${name}=\"$atts->{$ns}->{$name}\"";
+			}
+		}
+	}
+
+	return $out;
 }
 
 1;
