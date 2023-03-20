@@ -155,20 +155,17 @@ sub getAttributes {
 
 	while($xml) {
 
-		# CLOSE EMPTY ATTRIBUTE
-		if($xml =~ m!^\s*/>(.*)$!s){
-			return {
-				xml => $1,
-				kids => 0,
-				snac => \%attributes
-			};
-		}
-
 		# CLOSE ATTRIBUTE
-		elsif($xml =~ m!^\s*>(.*)$!s){ # create child array
+		if($xml =~ m!^\s*(/?>)(.*)$!s){
+            my $kids = 0;
+
+            if($1 eq '>') {
+                $kids = 1;
+            }
+            
 			return {
-				xml => $1,
-				kids => 1,
+				xml => $2,
+				kids => $kids,
 				snac => \%attributes
 			};
 		}

@@ -7,11 +7,11 @@ require "./text.pl";
 require "./snac2xml.pl";
 require "./xml2snac.pl";
 
-$input = "xml/waffle-bad.xml";
+$input = "xml/waffle.xml";
 $jsonOut = "out/snac.json";
 $xmlOut = "out/snac.xml";
 
-open my $fh, '<', $input;
+open my $fh, '<', $ARGV[0];
 $/ = undef;
 my $xml = <$fh>;
 my @prefix = ();
@@ -25,7 +25,7 @@ close $jsonFh;
 
 #print("$json\n");
 
-my $xml = snac2xml($json, "", "\t", '  ');
+my $xml = snac2xml($json, "", "    ", '  ');
 open my $xmlFh, '>', $xmlOut;
 print $xmlFh $xml;
 close $xmlFh;

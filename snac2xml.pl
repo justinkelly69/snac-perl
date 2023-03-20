@@ -24,12 +24,12 @@ sub _snac2xml {
 			}else {
 				$tagName = "$ns:$name";
 			}
-			$out .= "\n$prefix<$tagName $attributes";
+			$out .= "\n$prefix<${tagName}${attributes}";
 
 			if(@$children > 0){
-				$out .= ">\n" ._snac2xml($children, "${prefix}${prefixChar}", $prefixChar, $attPrefix) ."\n$prefix</$tagName>";
+				$out .= ">" ._snac2xml($children, "${prefix}${prefixChar}", $prefixChar, $attPrefix) ."\n$prefix</$tagName>";
 			}else {
-				$out .= "/>\n";
+				$out .= " />";
 			}
 
 		}elsif($_->{D}){
