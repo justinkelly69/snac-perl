@@ -1,11 +1,11 @@
 sub snac2xml {
-	my($json, $prefix, $prefixChar, $attPrefix) = @_;
-	return _snac2xml(decode_json($json), $prefix, $prefixChar, $attPrefix);
+	my($json, $options) = @_;
+	return _snac2xml(decode_json($json), $options->{PREFIX}, $options->{PREFIX_CHARACTER}, $options->{ATTRIBUTE_PREFIX}, $options);
 }
 
 
 sub _snac2xml {
-	my($snac, $prefix, $prefixChar, $attPrefix) = @_;
+	my($snac, $prefix, $prefixChar, $attPrefix, $options) = @_;
 
 	my $out;
 
@@ -24,30 +24,48 @@ sub _snac2xml {
 			}else {
 				$tagName = "$ns:$name";
 			}
-			$out .= "\n$prefix<${tagName}${attributes}";
+			$out .= prefix($prefix)."<${tagName}${attributes}";
 
 			if(@$children > 0){
-				$out .= ">" ._snac2xml($children, "${prefix}${prefixChar}", $prefixChar, $attPrefix) ."\n$prefix</$tagName>";
+				$out .= ">" ._snac2xml($children,"${prefix}${prefixChar}",$prefixChar,$attPrefix,$options) .prefix($prefix)."</$tagName>";
 			}else {
 				$out .= " />";
 			}
 
 		}elsif($_->{D}){
-			my $cdata = escapeCDATA($_->{D});
-			$out .= "\n${prefix}<![CDATA[${cdata}]]>";
+			my $cdata = $_->{D};
+			if($options->{USE_CDATA}){
+				$cdata = escapeCDATA($cdata);
+				$out .= prefix($prefix)."<![CDATA[${cdata}]]>";
+			}else {
+				$cdata = escapeHtml($cdata);
+				$out .= prefix($prefix)."${cdata}";
+			}
 
 		}elsif($_->{M}){
-			my $comment = escapeComment($_->{M});
-			$out .= "\n${prefix}<!--${comment}-->";
-
+			if($options->{SHOW_COMMENTS}){
+				my $comment = escapeComment($_->{M});
+				$out .= prefix($prefix)."<!--${comment}-->";
+			}
 		}elsif($_->{L}){
-			my $lang = escapePILang($_->{L});
-			my $body = escapePIBody($_->{B});
-			$out .= "\n${prefix}<?${lang} ${body}?>";
-
+			if($options->{SHOW_PI}){
+				my $lang = escapePILang($_->{L});
+				my $languages = $options->{PI_LANGUAGES};
+				if (grep(/$lang/, @$languages)){
+					my $body = escapePIBody($_->{B});
+					$out .= prefix($prefix)."<?${lang} ${body}?>";
+				}
+			}
 		}elsif($_->{T}){
 			my $text = escapeHtml($_->{T});
-			$out .= "\n${prefix}${text}";
+			if($options->{TRIM_TEXT}){
+				$text =~ s/^\s+//;
+				$text =~ s/\s+$//;
+			}
+			if($options->{NORMALIZE_TEXT}){
+				$text =~ s/\s+/ /g;
+			}
+			$out .= prefix($prefix)."${text}";
 		}
 	}
 
@@ -64,12 +82,28 @@ sub attributesToXML {
 		foreach $name (keys %ns) {
 			if($ns == '@'){
 				my $value = escapeHtml($atts->{$ns}->{$name});
-				$out .= "\n${prefix}${attPrefix}${name}=\"${value}\"";
+				$out .= prefix(${prefix}.${attPrefix})."${name}=\"${value}\"";
 			} else {
 				my $value = escapeHtml($atts->{$ns}->{$name});
-				$out .= "\n${prefix}${attPrefix}${ns}:${name}=\"${value}\"";
+				$out .= prefix(${prefix}.${attPrefix})."${ns}:${name}=\"${value}\"";
 			}
 		}
+	}
+
+	return $out;
+}
+
+
+sub prefix {
+	my($prefix) = @_;
+	my $out = "";
+
+	if($options->{USE_NEWLINES}){
+		$out .= "\n";
+	}
+
+	if($options->{USE_PREFIXES}){
+		$out .= $prefix;
 	}
 
 	return $out;
