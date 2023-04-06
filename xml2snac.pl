@@ -1,11 +1,11 @@
 sub xml2snac {
-	my($xml) = @_;
+	my($xml, $stack) = @_;
+	local @stack;
 	return encode_json(_xml2snac($xml)->{out});
 }
 
-
 sub _xml2snac {
-	my ($xml, $stack) = @_;
+	my ($xml) = @_;
 	my @out;
 
 	while($xml) {
@@ -29,7 +29,7 @@ sub _xml2snac {
 			}
 
 			push(
-				@$stack,
+				@stack,
 				{
 					S => $snac->{S},
 					N => $snac->{N}
@@ -37,15 +37,17 @@ sub _xml2snac {
 			);
 
 			if($attData->{'kids'}){
-				my($kids) = _xml2snac($xml, $stack);
+				my($kids) = _xml2snac($xml);
 				$snac->{C} = $kids->{out};
 				$xml = $kids->{xml};
 				push(@out, $snac);
 
 			}else {
 				push(@out, $snac);
-				my $prev = pop(@$stack);
+				my $prev = pop(@stack);
 			}
+
+			#printStack(@stack);
 		}
 
 		# CLOSE TAG
@@ -62,7 +64,9 @@ sub _xml2snac {
 				$snac->{N} = substr($nameTag, $index + 1);
 			}
 
-			my $prev = pop(@$stack);
+			#printStack(@stack);
+
+			my $prev = pop(@stack);
 			if($prev->{S} ne $snac->{S} || $prev->{N} ne $snac->{N}){
 				die "\n\nUNMATCHED TAG <$prev->{S}:$prev->{N}></$snac->{S}:$snac->{N}>\n";
 			}
@@ -157,12 +161,12 @@ sub getAttributes {
 
 		# CLOSE ATTRIBUTE
 		if($xml =~ m!^\s*(/?>)(.*)$!s){
-            my $kids = 0;
+			my $kids = 0;
 
-            if($1 eq '>') {
-                $kids = 1;
-            }
-            
+			if($1 eq '>') {
+				$kids = 1;
+			}
+
 			return {
 				xml => $2,
 				kids => $kids,
@@ -172,7 +176,7 @@ sub getAttributes {
 
 		# OPEN ATTRIBUTE
 		elsif($xml =~ m!^\s*([\w]+:?[\w]+)=(['"])(.*)$!s){
-			my $att = attribute(\%attributes, $1, $2, $3);
+			my $att = addAttribute(\%attributes, $1, $2, $3);
 			$attributes = $att->{attributes};
 			$xml = $att->{xml};
 		}
@@ -185,7 +189,7 @@ sub getAttributes {
 }
 
 
-sub attribute {
+sub addAttribute {
 	my($attributes, $nameStr, $quoteChar, $xml) = @_;
 
 	my $attVal = getAttributeValue($quoteChar, $xml);

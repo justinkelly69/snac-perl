@@ -61,4 +61,10 @@ sub escapePIBody {
 	return $value;
 }
 
+sub trim {
+    my $s = shift;
+    $s =~ s/^\s+|\s+$//g;
+    return $s;
+}
+
 1;

@@ -35,6 +35,8 @@ my $xml = <$fh>;
 my @prefix = ();
 close $fh;
 
+#print("open $xml\n");
+
 my @stack;
 my $json = xml2snac($xml, \@stack);
 open my $jsonFh, '>', $jsonOut;
