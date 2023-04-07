@@ -1,20 +1,25 @@
 #!/home/jk/opt/perl/bin/perl
 
-use JSON::MaybeXS qw(encode_json decode_json);
+use JSON;
+use Data::Dumper;
 
 require "./dtd.pl";
 
-parse_particle(" (#PCDATA)*");
-parse_particle(" (#PCDATA | name* |value?)*");
-parse_particle(" (name* |value?)?");
-parse_particle(" (name+ ,value?)+");
-parse_particle(" (alpha+ , beta? , zeta)+");
-#parse_particle(" (alpha+ , beta? , (gamma | delta | epsilon) , zeta)+");
-parse_particle(" (alpha+ | beta? | (gamma , delta , epsilon) | zeta)+");
-parse_particle(" (#PCDATA | alpha+ | beta? | (gamma , delta , epsilon) | zeta)+");
+# printDTD('name* , value+, dirt, bag )');
+# printDTD('name* | value+| dirt| bag )');
+# printDTD('name* , value+, dirt, bag )+');
+# printDTD('name* | value+| dirt| bag )*');
+printDTD('name* , value+, (house|on|fire)*, dirt, bag )+');
+printDTD('name* | value+| (house*,on?,fire+)| dirt| bag )*');
+# printDTD('#PCDATA )');
+# printDTD('#PCDATA | name* | value+| dirt| bag )*');
+printDTD('#PCDATA | name* | value+| (house*,on?,fire+)| dirt| bag )*');
 
-sub parse_particle {
+
+sub printDTD {
     my ($dtd) = @_;
+    $json = JSON->new->allow_nonref;
+    my ( $dtdOut, $kids ) = entityChildren($dtd);
     print("$dtd\n");
-    print encode_json( read_children($dtd) ) . "\n\n";
+    print $json->pretty->encode($kids) . "\n";
 }

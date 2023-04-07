@@ -124,6 +124,11 @@ my $EncName      = "[A-Za-z]([A-Za-z0-9._]|'-')*";
 my $NotationDecl = "<!NOTATION${S}${Name}${S}(${ExternalID}|${PublicID})${S}?>";
 my $PublicID     = "PUBLIC${S}${PubidLiteral}";
 
+##################################
+my $entityChildren = '[^>]+';
+
+##################################
+
 my $Letter = "$BaseChar |$Ideographic";
 
 my $BaseChar =
