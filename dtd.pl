@@ -1,14 +1,106 @@
 use Data::Dumper;
 
-#use JSON::MaybeXS qw(encode_json decode_json);
 use String::Util qw(trim);
 
 require "./text.pl";
 
-#require "./patterns.pl";
+my $name_pattern   = '[A-Za-z0-9_-]*';
+my $qpattern       = '[?+*]?';
+my $SPACE          = '\s*';
+my $PCDATA         = '#PCDATA';
+my $VERTICALBAR    = '[|]';
+my $COMMA          = '[,]';
+my $VERTICAL_COMMA = '[|,]';
 
-my $name_pattern = '[A-Za-z0-9_-]*';
-my $qpattern     = '[?+*]?';
+sub entityChildren {
+    my ($dtd) = @_;
+    my @kids;
+    my $atomType = 'X';
+
+    while ($dtd) {
+
+        # Strip off ' | ' or ' , ' at start of string
+        if ( $dtd =~ /^${SPACE}${VERTICAL_COMMA}(.*)/ ) {
+            $dtd = $1;
+        }
+
+        # (#PCDATA)
+        elsif ( $dtd =~ /^${SPACE}${PCDATA}${SPACE}\)(.*)/ ) {
+            if ( $atomType eq 'X' ) {
+                $atomType = 'T';
+            }
+            $dtd = $1;
+            push( @kids, [ 'R', '#TEXT' ] );
+
+            return ( $dtd, [ $atomType, \@kids ] );
+        }
+
+        # (#PCDATA | .... )
+        elsif ( $dtd =~ /^${SPACE}${PCDATA}${SPACE}${VERTICALBAR}(.*)/ ) {
+            if ( $atomType eq 'X' ) {
+                $atomType = 'M';
+            }
+            $dtd = $1;
+        }
+
+        # (name | .... )
+        elsif ( $dtd =~ /^${SPACE}(${name_pattern})${SPACE}${VERTICALBAR}(.*)/ )
+        {
+            if ( $atomType eq 'X' ) {
+                $atomType = 'C';
+            }
+            my $atomName = $1;
+            $dtd = $2;
+            push( @kids, [ 'R', $atomName ] );
+        }
+
+        # (name , .... )
+        elsif ( $dtd =~
+            /^${SPACE}(${name_pattern})(${qpattern})${SPACE}${COMMA}(.*)/ )
+        {
+            if ( $atomType eq 'X' ) {
+                $atomType = 'S';
+            }
+            my $atomName = $1;
+            $dtd = $3;
+            push( @kids, [ 'R', $atomName, quantify($2) ] );
+        }
+
+        # ( new particle
+        elsif ( $dtd =~ /^${SPACE}\(${SPACE}(.*)/ ) {
+            my $newKids;
+            ($dtd, $newKids) = entityChildren($1);
+            push(@kids, $newKids);
+        }   
+
+        # name* ) // $VERTICALBAR
+        elsif (
+            $dtd =~ /^${SPACE}(${name_pattern})${SPACE}\)(${qpattern})(.*)/ )
+        {
+            my $atomName = $1;
+            $dtd = $3;
+            push( @kids, [ 'R', $atomName ] );
+
+            return ( $dtd, [ $atomType, \@kids, quantify($2) ] );
+        }
+
+        # name* ) // $COMMA
+        elsif ( $dtd =~
+            /^${SPACE}(${name_pattern})(${qpattern})${SPACE}\)(${qpattern})(.*)/
+          )
+        {
+            my $atomName = $1;
+            $dtd = $4;
+            push( @kids, [ 'R', $atomName, quantify($2) ] );
+
+            return ( $dtd, [ $atomType, \@kids, quantify($3) ] );
+        }
+
+        else {
+            die("something not right\n");
+        }
+    }
+}
 
 sub quantify {
     my ($quantifier) = @_;
@@ -25,87 +117,5 @@ sub quantify {
         $max = -1;
     }
     return ( $min, $max );
-}
-
-sub entityChildren {
-    my ($dtd) = @_;
-    my @kids;
-    my $type = 'Z';
-
-    # Text Only (#PCDATA)
-    if ( $dtd =~ /^\s*#PCDATA\s*\)(.*)/ ) {
-        $type = 'T';
-        $dtd  = $1;
-        return ( $dtd, [ 'T', [], 1, 1 ] );
-    }
-
-    # Mixed (#PCDATA | ....)
-    elsif ( $dtd =~ /^\s*#PCDATA\s*([|])(.*)/ ) {
-        $type = 'M';
-        $dtd  = $2;
-
-        while ( $dtd =~ /^\s*(${name_pattern})(${qpattern})\s*([|])(.*)/ ) {
-
-            if ( $type ne 'M' ) {
-                die "Wrong type '$type'\n";
-            }
-
-            push( @kids, [ 'R', $1, quantify($2) ] );
-            $dtd = $4;
-        }
-    }
-
-    # Sequence
-    while ( $dtd =~ /^\s*(${name_pattern})(${qpattern})\s*([,])(.*)/ ) {
-        if ( $type eq 'Z' ) {
-            $type = 'S';
-        }
-        else {
-            if ( $type ne 'S' ) {
-                die "Wrong type '$type'\n";
-            }
-        }
-        push( @kids, [ 'R', $1, quantify($2) ] );
-        $dtd = $4;
-    }
-
-    # Choice
-    while ( $dtd =~ /^\s*(${name_pattern})(${qpattern})\s*([|])(.*)/ ) {
-        if ( $type eq 'Z' ) {
-            $type = 'C';
-        }
-        else {
-            if ( $type ne 'C' ) {
-                die "Wrong type '$type'\n";
-            }
-        }
-        push( @kids, [ 'R', $1, quantify($2) ] );
-        $dtd = $4;
-    }
-
-    # End Bracket with one node
-    if ( $dtd =~ /^\s*(${name_pattern})(${qpattern})\s*\)(${qpattern})(.*)/ ) {
-        push( @kids, [ 'R', $1, quantify($2) ] );
-        $dtd = $4;
-        return ( $dtd, [ $type, \@kids, quantify($3) ] );
-    }
-
-    # End Bracket with no node
-    elsif ( $dtd =~ /^\s*\)(${qpattern})(.*)/ ) {
-        $dtd = $2;
-        return ( $dtd, [ $type, \@kids, quantify($1) ] );
-    }
-
-    # New Node. Call recursive
-    elsif ( $dtd =~ /^\s*\((.*)/ ) {
-        ( $dtd, $newKids ) = entityChildren($1);
-        push( @kids, $newKids );
-        return ( $dtd, [ $type, \@kids, quantify($3) ] );
-    }
-
-    else {
-        die("Something Wrong $dtd\n");
-    }
-
 }
 
