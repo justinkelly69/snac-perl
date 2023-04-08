@@ -78,9 +78,12 @@ sub entityChildren {
             $dtd =~ /^${SPACE}(${name_pattern})${SPACE}\)(${qpattern})(.*)/ )
         {
             my $atomName = $1;
+            if($atomName !~ /^\s*$/){
+                #$atomName = 'MUD';
+                push( @kids, [ 'R', $atomName ] );
+            }
             $dtd = $3;
-            push( @kids, [ 'R', $atomName ] );
-
+            
             return ( $dtd, [ $atomType, \@kids, quantify($2) ] );
         }
 
