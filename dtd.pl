@@ -1,31 +1,64 @@
 use Data::Dumper;
-
+use JSON;
 use String::Util qw(trim);
 
 require "./text.pl";
 
-my $name_pattern   = '[A-Za-z0-9_-]*';
-my $qpattern       = '[?+*]?';
-my $SPACE          = '\s*';
-my $PCDATA         = '#PCDATA';
-my $VERTICALBAR    = '[|]';
-my $COMMA          = '[,]';
-my $VERTICAL_COMMA = '[|,]';
+$name_pattern   = '[A-Za-z0-9_-]*';
+$qpattern       = '[?+*]?';
+$SPACE          = '\s*';
+$PCDATA         = '#PCDATA';
+$VERTICALBAR    = '[|]';
+$COMMA          = '[,]';
+$VERTICAL_COMMA = '[|,]';
 
-sub entityChildren {
+sub parseElement {
+    my ( $elementStr, $elements ) = @_;
+    my $name;
+
+    if ( $elementStr =~ /^\s*($name_pattern)\s+(.*)/s ) {
+        $name       = $1;
+        $elementStr = $2;
+
+        if ( $elementStr =~ /\s*#ANY\s*>(.*)/s ) {
+            $$elements{$name} = 'ANY';
+            return ( $1, $elements );
+        }
+
+        elsif ( $elementStr =~ /\s*#EMPTY\s*>(.*)/s ) {
+            $$elements{$name} = 'EMPTY';
+            return ( $1, $elements );
+        }
+
+        elsif ( $elementStr =~ /\s*\((.*)>(.*)/s ) {
+            my ( $dtd, $children ) = elementChildren($1);
+            $$elements{$name} = $children;
+            return ( $2, $elements );
+        }
+
+        else {
+            die "Invalid string $elementStr\n";
+        }
+    }
+    else {
+        die "Not an element $elementStr\n";
+    }
+}
+
+sub elementChildren {
     my ($dtd) = @_;
     my @kids;
     my $atomType = 'X';
 
     while ($dtd) {
 
-        # Strip off ' | ' or ' , ' at start of string
-        if ( $dtd =~ /^${SPACE}${VERTICAL_COMMA}(.*)/ ) {
+        # # Strip off ' | ' or ' , ' at start of string
+        if ( $dtd =~ /^${SPACE}${VERTICAL_COMMA}(.*)/s ) {
             $dtd = $1;
         }
 
         # (#PCDATA)
-        elsif ( $dtd =~ /^${SPACE}${PCDATA}${SPACE}\)(.*)/ ) {
+        elsif ( $dtd =~ /^${SPACE}${PCDATA}${SPACE}\)(.*)/s ) {
             if ( $atomType eq 'X' ) {
                 $atomType = 'T';
             }
@@ -36,7 +69,7 @@ sub entityChildren {
         }
 
         # (#PCDATA | .... )
-        elsif ( $dtd =~ /^${SPACE}${PCDATA}${SPACE}${VERTICALBAR}(.*)/ ) {
+        elsif ( $dtd =~ /^${SPACE}${PCDATA}${SPACE}${VERTICALBAR}(.*)/s ) {
             if ( $atomType eq 'X' ) {
                 $atomType = 'M';
             }
@@ -44,7 +77,8 @@ sub entityChildren {
         }
 
         # (name | .... )
-        elsif ( $dtd =~ /^${SPACE}(${name_pattern})${SPACE}${VERTICALBAR}(.*)/ )
+        elsif (
+            $dtd =~ /^${SPACE}(${name_pattern})${SPACE}${VERTICALBAR}(.*)/s )
         {
             if ( $atomType eq 'X' ) {
                 $atomType = 'C';
@@ -56,7 +90,7 @@ sub entityChildren {
 
         # (name , .... )
         elsif ( $dtd =~
-            /^${SPACE}(${name_pattern})(${qpattern})${SPACE}${COMMA}(.*)/ )
+            /^${SPACE}(${name_pattern})(${qpattern})${SPACE}${COMMA}(.*)/s )
         {
             if ( $atomType eq 'X' ) {
                 $atomType = 'S';
@@ -67,34 +101,27 @@ sub entityChildren {
         }
 
         # ( new particle
-        elsif ( $dtd =~ /^${SPACE}\(${SPACE}(.*)/ ) {
+        elsif ( $dtd =~ /^${SPACE}\(${SPACE}(.*)/s ) {
             my $newKids;
-            ($dtd, $newKids) = entityChildren($1);
-            push(@kids, $newKids);
-        }   
-
-        # name* ) // $VERTICALBAR
-        elsif (
-            $dtd =~ /^${SPACE}(${name_pattern})${SPACE}\)(${qpattern})(.*)/ )
-        {
-            my $atomName = $1;
-            if($atomName !~ /^\s*$/){
-                #$atomName = 'MUD';
-                push( @kids, [ 'R', $atomName ] );
-            }
-            $dtd = $3;
-            
-            return ( $dtd, [ $atomType, \@kids, quantify($2) ] );
+            ( $dtd, $newKids ) = elementChildren($1);
+            push( @kids, $newKids );
         }
 
         # name* ) // $COMMA
         elsif ( $dtd =~
-            /^${SPACE}(${name_pattern})(${qpattern})${SPACE}\)(${qpattern})(.*)/
+/^${SPACE}(${name_pattern})(${qpattern})${SPACE}\)(${qpattern})(.*)/s
           )
         {
             my $atomName = $1;
             $dtd = $4;
-            push( @kids, [ 'R', $atomName, quantify($2) ] );
+            if ( $atomName ne '' ) {
+                if ( $atomType eq 'S' ) {
+                    push( @kids, [ 'R', $atomName, quantify($2) ] );
+                }
+                else {
+                    push( @kids, [ 'R', $atomName ] );
+                }
+            }
 
             return ( $dtd, [ $atomType, \@kids, quantify($3) ] );
         }
