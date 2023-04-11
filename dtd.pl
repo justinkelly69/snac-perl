@@ -20,12 +20,12 @@ sub parseElement {
         $name       = $1;
         $elementStr = $2;
 
-        if ( $elementStr =~ /\s*#ANY\s*>(.*)/s ) {
+        if ( $elementStr =~ /\s*ANY\s*>(.*)/s ) {
             $$elements{$name} = 'ANY';
             return ( $1, $elements );
         }
 
-        elsif ( $elementStr =~ /\s*#EMPTY\s*>(.*)/s ) {
+        elsif ( $elementStr =~ /\s*EMPTY\s*>(.*)/s ) {
             $$elements{$name} = 'EMPTY';
             return ( $1, $elements );
         }
@@ -149,3 +149,105 @@ sub quantify {
     return ( $min, $max );
 }
 
+sub parseAttList {
+    my ( $attList, $attributes ) = @_;
+    my $name;
+
+    if ( $attList =~ /^\s*($name_pattern)\s+(.*)/s ) {
+        $name    = $1;
+        $attList = $2;
+
+        while ($attList) {
+
+            if ( $attList =~ /^\s*($name_pattern)\s+CDATA\s+(.*)/s ) {
+                my $attName = $1;
+                $attList = $2;
+
+                if ( $2 =~ /^\s*(['"])(.*)/s ) {
+                    my $defaultValue;
+                    ( $defaultValue, $attList ) = getString( $2, $1 );
+                    $attributes{$name}{$attName} = [ 'C', 'D', $defaultValue ];
+                }
+
+                elsif ( $2 =~ /^\s*\(\s*(.*)/s ) {
+
+                    my $enums, $defaultValue;
+                    ( $enums, $defaultValue, $attList ) = enumChoice($1);
+                    $json = JSON->new->allow_nonref;
+                    $attributes{$name}{$attName} =
+                      [ 'C', 'E', $enums, $defaultValue ];
+                }
+
+                elsif ( $2 =~ /^\s*#FIXED\s*(['"])(.*)/s ) {
+                    my $fixedValue;
+                    ( $fixedValue, $attList ) = getString( $2, $1 );
+                    $attributes{$name}{$attName} = [ 'C', 'F', $fixedValue ];
+                }
+
+                elsif ( $2 =~ /^s*#REQUIRED\s*(.*)/s ) {
+                    $attList = $1;
+                    $attributes{$name}{$attName} = [ 'C', 'R' ];
+                }
+
+                elsif ( $2 =~ /^s*#IMPLIED\s*(.*)/s ) {
+                    $attList = $1;
+                    $attributes{$name}{$attName} = [ 'C', 'I' ];
+                }
+
+                elsif ( $2 =~ /^\s*(.*)/s ) {
+                    $attList = $1;
+                    $attributes{$name}{$attName} = [ 'C', 'I' ];
+                }
+
+            }
+
+            elsif ( $attList =~ /\s*>(.*)/ ) {
+                return ( $1, $attributes );
+            }
+
+            else {
+                die("line fucked '$attList'\n");
+            }
+
+        }
+
+        # CDATA
+        # NMTOKEN
+        # NMTOKENS
+        # Enumeration
+        # ENTITY
+        # ENTITIES
+        # ID
+        # IDREF
+        # IDREFS
+        # NOTATION
+    }
+
+}
+
+sub enumChoice {
+    my ($str) = @_;
+    my @enums, $defaultValue;
+
+    while ( $str =~ /^\s*($name_pattern)\s*\|(.*)/s ) {
+        push( @enums, $1 );
+        $str = $2;
+    }
+
+    if ( $str =~ /^\s*($name_pattern)\s*\)(.*)/s ) {
+        push( @enums, $1 );
+        $str = $2;
+    }
+    else {
+        die("Not an Enumerated String '$1'\n");
+    }
+
+    if ( $str =~ /^\s*(["'])(.*)/s ) {
+        ( $defaultValue, $str ) = getString( $2, $1 );
+    }
+    else {
+        die("No Default Value ['$defaultValue'] ['$str']\n");
+    }
+
+    return ( \@enums, $defaultValue, $str );
+}
