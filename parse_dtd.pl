@@ -45,6 +45,27 @@ $dtd = "
 # $json = JSON->new->allow_nonref;
 # print $json->pretty->encode($elements) . "\n";
 
+my $attList, %attributes;
+$attList = "
+<!ATTLIST person
+    firstname CDATA #REQUIRED
+    middlename CDATA #IMPLIED
+    letters CDATA (alpha|beta|gamma|delta|epsilon) \"delta\"
+    lastname CDATA #FIXED 'Smith'
+    status CDATA \"gobshite\" 
+>
+";
+if ( $attList =~ /\s*<!ATTLIST\s+(.*)/s ) {
+    printAttributes( $1, \%attributes );
+}
+
+sub printAttributes {
+    my ( $attList, $attributes ) = @_;
+    $json = JSON->new->allow_nonref;
+    ( $attList, $attributes ) = parseAttList( $attList, $attributes );
+    print $json->pretty->encode($attributes) . "\n";
+}
+
 sub printElement {
     my ($elementStr) = @_;
     return parseElement( $elementStr, \%elements );

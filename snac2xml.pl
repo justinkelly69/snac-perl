@@ -94,7 +94,11 @@ sub attributesToXML {
     foreach $ns ( keys %$atts ) {
         my %ns = %{ $atts->{$ns} };
         foreach $name ( keys %ns ) {
+<<<<<<< HEAD
             if ( $ns eq '@' ) {
+=======
+            if ( $ns == '@' ) {
+>>>>>>> 967d3adb1c7f15306a5c348dc4e099b7a6d899b3
                 my $value = escapeHtml( $atts->{$ns}->{$name} );
                 $out .=
                   prefix( ${prefix} . ${attPrefix} ) . "${name}=\"${value}\"";
