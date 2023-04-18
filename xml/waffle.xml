@@ -1,16 +1,18 @@
 <?xml version="1.0"?>
-<fo:breakfast_menu xmlns="http://br.com" xmlns:fo='http://fo\'.com' xmlns:co="http://\"co.com" 
-chef="&lt;ooohlala&amp;&gt;">
+<fo:breakfast_menu
+    xmlns="http://br.com"
+    xmlns:fo='http://fo.com'
+    xmlns:co="http://co.com"
+    chef="&lt;ooohlala&amp;&gt;">
     <fo:food co:nationality="BE" id="x999" class="noclass">
         <date day="2022-22-22" />
-        <name title='Mr. O\'Brien'>Belgian Waffles</name>
-        I     Love my           
-        Waffles
-        <?php
+        <name title='Mr. O&apos;Brien'>Belgian Waffles</name> I Love my
+        Waffles<?php
         $name="James P. Sullivan XXXVIII";
         for($i = 0; $i < SIZE_OF_MEMORY; $i++){
             deleteMemory($i);
-        } ?>
+        } 
+        ?>
         <price co:currency="USD" curse="fuck off" fo:bs="bullshit">$5.95</price>
         <description class="longtext">
         <!-- THIS IS A NICE COMMENT !!!! -->
