@@ -36,48 +36,61 @@ sub removeComments {
 }
 
 sub parseDTD {
-    my ( $dtdString, $include ) = @_;
-    my %dtd, %elements, %attributes, %entities, %notations, $name;
-    my $elements   = \%elements;
-    my $attributes = \%attributes;
-    my $entities   = \%entities;
-    my $notations  = \%notations;
-
+    my ( $dtdString, $out, $include ) = @_;
     my $json = JSON->new->allow_nonref;
 
     while ( trim($dtdString) ne '' ) {
 
         if ( $dtdString =~ /^\s*<!ELEMENT\s+(.*)/s ) {
-            ( $dtdString, $elements ) = parseElement( $1, $elements );
+            if ( !defined( $$out{elements} ) ) {
+                $$out{elements} = {};
+            }
+            $dtdString = parseElement( $1, $$out{elements}, $include );
         }
 
         elsif ( $dtdString =~ /^\s*<!ATTLIST\s+(.*)/s ) {
-            ( $dtdString, $attributes ) = parseAttList( $1, $attributes );
+            if ( !defined( $$out{attributes} ) ) {
+                $$out{attributes} = {};
+            }
+            $dtdString = parseAttList( $1, $$out{attributes}, $include );
         }
 
         elsif ( $dtdString =~ /^\s*<!ENTITY\s+(.*)/s ) {
-            ( $dtdString, $entities ) = parseEntity( $1, $entities );
+            if ( !defined( $$out{entities} ) ) {
+                $$out{entities} = {};
+            }
+            $dtdString = parseEntity( $1, $$out{entities}, $include );
         }
 
         elsif ( $dtdString =~ /^\s*<!NOTATION\s+(.*)/s ) {
-            ( $dtdString, $notations ) = parseNotation( $1, $notations );
+            if ( !defined( $$out{notations} ) ) {
+                $$out{notations} = {};
+            }
+            $dtdString = parseNotation( $1, $$out{notations}, $include );
+        }
+        elsif ( $dtdString =~ /^\s*\]\]>\s+(.*)/s ) {
+            print "end\n";
+            $dtdString = $1;
+            return $dtdString;
+        }
+        elsif ( $dtdString =~ /^\s*<!\[INCLUDE\[\s+(.*)/s ) {
+            print "include\n";
+            $dtdString = parseDTD( $1, $out, $include );
+        }
+
+        elsif ( $dtdString =~ /^\s*<!\[IGNORE\[\s+(.*)/s ) {
+            print "ignore\n";
+            $dtdString = parseDTD( $1, $out, 0 );
         }
 
         else {
-            last;
+            return $dtdString;
         }
     }
-
-    return {
-        elements   => $elements,
-        attributes => $attributes,
-        entities   => $entities,
-        notations  => $notations
-    };
 }
 
 sub parseElement {
-    my ( $elementStr, $elements ) = @_;
+    my ( $elementStr, $elements, $include ) = @_;
     my $name;
 
     if ( $elementStr =~ /^\s*($name_pattern)\s+(.*)/s ) {
@@ -85,19 +98,19 @@ sub parseElement {
         $elementStr = $2;
 
         if ( $elementStr =~ /^\s*ANY\s*(.*)/s ) {
-            $$elements{$name} = 'ANY';
+            $$elements{$name} = 'ANY' if ($include);
             $elementStr = $1;
         }
 
         elsif ( $elementStr =~ /^\s*EMPTY\s*(.*)/s ) {
-            $$elements{$name} = 'EMPTY';
+            $$elements{$name} = 'EMPTY' if ($include);
             $elementStr = $1;
         }
 
         elsif ( $elementStr =~ /^\s*\((.*)/s ) {
             my $children;
-            ( $elementStr, $children ) = elementChildren($1);
-            $$elements{$name} = $children;
+            ( $elementStr, $children ) = elementChildren( $1, $include );
+            $$elements{$name} = $children if ($include);
         }
 
         else {
@@ -110,12 +123,12 @@ sub parseElement {
 
     if ( $elementStr =~ /^\s*>(.*)/s ) {
         $elementStr = $1;
-        return ( $elementStr, $elements );
+        return $elementStr;
     }
 }
 
 sub elementChildren {
-    my ($dtd) = @_;
+    my ( $dtd, $include ) = @_;
     my @kids;
     my $atomType = 'X';
 
@@ -132,7 +145,7 @@ sub elementChildren {
                 $atomType = 'T';
             }
             $dtd = $1;
-            push( @kids, [ 'R', '#TEXT' ] );
+            push( @kids, [ 'R', '#TEXT' ] ) if ($include);
 
             return ( $dtd, [ $atomType, \@kids ] );
         }
@@ -152,7 +165,7 @@ sub elementChildren {
             }
             my $atomName = $1;
             $dtd = $2;
-            push( @kids, [ 'R', $atomName ] );
+            push( @kids, [ 'R', $atomName ] ) if ($include);
         }
 
         # (name , .... )
@@ -162,14 +175,14 @@ sub elementChildren {
             }
             my $atomName = $1;
             $dtd = $3;
-            push( @kids, [ 'R', $atomName, quantify($2) ] );
+            push( @kids, [ 'R', $atomName, quantify($2) ] ) if ($include);
         }
 
         # ( new particle
         elsif ( $dtd =~ /^\s*\(\s*(.*)/s ) {
             my $newKids;
-            ( $dtd, $newKids ) = elementChildren($1);
-            push( @kids, $newKids );
+            ( $dtd, $newKids ) = elementChildren( $1, $include );
+            push( @kids, $newKids ) if ($include);
         }
 
         # name* ) // $COMMA
@@ -178,10 +191,11 @@ sub elementChildren {
             $dtd = $4;
             if ( $atomName ne '' ) {
                 if ( $atomType eq 'S' ) {
-                    push( @kids, [ 'R', $atomName, quantify($2) ] );
+                    push( @kids, [ 'R', $atomName, quantify($2) ] )
+                      if ($include);
                 }
                 else {
-                    push( @kids, [ 'R', $atomName ] );
+                    push( @kids, [ 'R', $atomName ] ) if ($include);
                 }
             }
 
@@ -212,7 +226,7 @@ sub quantify {
 }
 
 sub parseAttList {
-    my ( $attList, $attributes ) = @_;
+    my ( $attList, $attributes, $include ) = @_;
     my $name;
 
     if ( $attList =~ /^\s*($name_pattern)\s+(.*)/s ) {
@@ -222,45 +236,49 @@ sub parseAttList {
         while ($attList) {
 
             if ( $attList =~ /^\s*($name_pattern)\s+NOTATION\s+\(\s*(.*)/s ) {
-
                 my $attName = $1;
                 my $enums, $defaultValue;
                 ( $enums, $defaultValue, $attList ) = enumChoice($2);
-                $attributes{$name}{$attName} =
-                  [ 'NOTATION', $enums, $defaultValue ];
+                $$attributes{$name}{$attName} =
+                  [ 'NOTATION', $enums, $defaultValue ]
+                  if ($include);
             }
 
             elsif ( $attList =~ /^\s*($name_pattern)\s+CDATA\s+(.*)/s ) {
                 my $attName = $1;
                 $attList = $2;
-
                 if ( $attList =~ /^\s*(['"])(.*)/s ) {
                     my $defaultValue;
                     ( $defaultValue, $attList ) = getString( $2, $1 );
-                    $attributes{$name}{$attName} =
-                      [ 'CDATA', 'DEFAULT', $defaultValue ];
+                    $$attributes{$name}{$attName} =
+                      [ 'CDATA', 'DEFAULT', $defaultValue ]
+                      if ($include);
                 }
 
                 elsif ( $attList =~ /^\s*#FIXED\s*(['"])(.*)/s ) {
                     my $fixedValue;
                     ( $fixedValue, $attList ) = getString( $2, $1 );
-                    $attributes{$name}{$attName} =
-                      [ 'CDATA', 'FIXED', $fixedValue ];
+                    $$attributes{$name}{$attName} =
+                      [ 'CDATA', 'FIXED', $fixedValue ]
+                      if ($include);
                 }
 
                 elsif ( $attList =~ /^s*#REQUIRED\s*(.*)/s ) {
                     $attList = $1;
-                    $attributes{$name}{$attName} = [ 'CDATA', 'REQUIRED' ];
+                    $$attributes{$name}{$attName} = [ 'CDATA', 'REQUIRED' ]
+                      if ($include);
                 }
 
                 elsif ( $attList =~ /^s*#IMPLIED\s*(.*)/s ) {
                     $attList = $1;
-                    $attributes{$name}{$attName} = [ 'CDATA', 'IMPLIED' ];
+                    $$attributes{$name}{$attName} = [ 'CDATA', 'IMPLIED' ]
+                      if ($include);
                 }
 
                 elsif ( $attList =~ /^\s*(.*)/s ) {
                     $attList = $1;
-                    $attributes{$name}{$attName} = [ 'CDATA', 'IMPLIED' ];
+                    $$attributes{$name}{$attName} = [ 'CDATA', 'IMPLIED' ]
+                      if ($include);
                 }
             }
 
@@ -271,46 +289,51 @@ sub parseAttList {
 
                 if ( $attList =~ /^\s*#REQUIRED\s*(.*)/s ) {
                     $attList = $1;
-                    $attributes{$name}{$attName} = [ $attType, 'REQUIRED' ];
+                    $$attributes{$name}{$attName} = [ $attType, 'REQUIRED' ]
+                      if ($include);
                 }
 
                 elsif ( $attList =~ /^\s*#IMPLIED\s*(.*)/s ) {
                     $attList = $1;
-                    $attributes{$name}{$attName} = [ $attType, 'IMPLIED' ];
+                    $$attributes{$name}{$attName} = [ $attType, 'IMPLIED' ]
+                      if ($include);
                 }
             }
 
             elsif ( $attList =~ /^\s*($name_pattern)\s*\(\s*(.*)/s ) {
                 my $attName = $1;
                 my $enums, $defaultValue;
-                ( $enums, $defaultValue, $attList ) = enumChoice($2);
-                $attributes{$name}{$attName} =
-                  [ 'ENUMERATED', $enums, $defaultValue ];
+                ( $enums, $defaultValue, $attList ) =
+                  enumChoice( $2, $include );
+                $$attributes{$name}{$attName} =
+                  [ 'ENUMERATED', $enums, $defaultValue ]
+                  if ($include);
             }
 
             elsif ( $attList =~ /^\s*>(.*)/s ) {
                 $attList = $1;
-                return ( $attList, $attributes );
+                return $attList;
             }
 
             else {
                 die("line fucked '$attList'\n");
             }
         }
+
     }
 }
 
 sub enumChoice {
-    my ($str) = @_;
+    my ( $str, $include ) = @_;
     my @enums, $defaultValue;
 
     while ( $str =~ /^\s*($name_pattern)\s*\|(.*)/s ) {
-        push( @enums, $1 );
+        push( @enums, $1 ) if ($include);
         $str = $2;
     }
 
     if ( $str =~ /^\s*($name_pattern)\s*\)(.*)/s ) {
-        push( @enums, $1 );
+        push( @enums, $1 ) if ($include);
         $str = $2;
     }
     else {
@@ -332,7 +355,7 @@ sub enumChoice {
 
 # <!NOTATION gif  SYSTEM "image/gif">
 sub parseNotation {
-    my ( $notationStr, $notations ) = @_;
+    my ( $notationStr, $notations, $include ) = @_;
     my $name, $public, $system;
 
     if ( $notationStr =~ /^\s*($name_pattern)\s+(.*)/s ) {
@@ -347,21 +370,22 @@ sub parseNotation {
                 $$notations{$name} = {
                     PUBLIC => $public,
                     SYSTEM => $system
-                };
+                  }
+                  if ($include);
             }
             else {
-                $$notations{$name} = { PUBLIC => $public };
+                $$notations{$name} = { PUBLIC => $public } if ($include);
             }
         }
 
         elsif ( $notationStr =~ /^\s*SYSTEM\s*(["'])(.*)/s ) {
             ( $system, $notationStr ) = getString( $2, $1 );
-            $$notations{$name} = { SYSTEM => $system };
+            $$notations{$name} = { SYSTEM => $system } if ($include);
         }
 
         if ( $notationStr =~ /^\s*>(.*)/s ) {
             $notationStr = $1;
-            return ( $notationStr, $notations );
+            return $notationStr;
         }
 
         else {
@@ -409,7 +433,7 @@ sub parseEntity {
 
         if ( $entityStr =~ /^\s*>(.*)/s ) {
             $entityStr = $1;
-            return ( $entityStr, $entities );
+            return $entityStr;
         }
     }
     else {

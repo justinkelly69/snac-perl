@@ -35,6 +35,15 @@ my $dtdString = <<EOF;
 <!ELEMENT first_name (#PCDATA)>
 <!ELEMENT last_name  (#PCDATA)>
 
+<![INCLUDE[
+     <!ATTLIST first_name text CDATA #FIXED "Fred">
+     <!ATTLIST last_name text CDATA #FIXED "Flintstone">
+]]>
+<![IGNORE[
+     <!ATTLIST first_name text CDATA #FIXED "Homer">
+     <!ATTLIST last_name text CDATA #FIXED "Simpson">
+]]>
+
 <!ELEMENT image EMPTY>
 <!ATTLIST image source CDATA   #REQUIRED
                 width  NMTOKEN #REQUIRED
@@ -53,12 +62,46 @@ my $dtdString = <<EOF;
 
 EOF
 
-my ( $pEntities, $dtdString ) = getEntities($dtdString);
-$dtdString = removeComments($dtdString);
+my $dtdString1 = <<EOF;
+<!ELEMENT name ANY>
+<!ELEMENT value EMPTY>
+<!ELEMENT message (#PCDATA | name | value| (house*,on?,fire+)| dirt| bag )*>
+<!ATTLIST person
+    id ID #REQUIRED
+    ssn ID #IMPLIED
+    noname CDATA
+    idref IDREF #IMPLIED
+    idrefs IDREFS #IMPLIED
+    nmtoken NMTOKEN #IMPLIED
+    nmtokens NMTOKENS #REQUIRED
+    entity ENTITY #IMPLIED
+    entities ENTITIES #REQUIRED
+    notation NOTATION #REQUIRED
+    firstname CDATA #REQUIRED
+    middlename CDATA #IMPLIED
+    letters (alpha|beta|gamma|delta|epsilon) \"delta\"
+    lastname CDATA #FIXED 'Smith'
+    status CDATA \"god almighty\" 
+>
+<!NOTATION gif  SYSTEM \"image/gif\">
+<!NOTATION tiff SYSTEM \"image/tiff\">
+<!NOTATION jpeg SYSTEM \"image/jpeg\">
+<!NOTATION png  SYSTEM \"image/png\">
+<!NOTATION gif_image PUBLIC \"https://compuserve.com/images/gifs/v1\">
+<!NOTATION tiff_image PUBLIC \"https://compuserve.com/images/tiffs/v1\" \"image/tiff\">
+
+EOF
+
+
+my $myDtd = $dtdString;
+my %out;
+
+my ( $pEntities, $myDtd ) = getEntities($myDtd);
+$myDtd = removeComments($myDtd);
 #print "$dtdString\n";
 
 $json = JSON->new->allow_nonref;
 print "pentities: " . $json->pretty->encode($pEntities) . "\n";
 
-my $dtd = parseDTD( $dtdString, 1 );
-print "DTD: " . $json->pretty->encode($dtd) . "\n";
+my $dtd = parseDTD( $myDtd, \%out, 1);
+print "DTD: " . $json->pretty->encode(\%out) . "\n";
