@@ -1,3 +1,4 @@
+# comment
 sub escapeHtml {
     my ($value) = @_;
 
