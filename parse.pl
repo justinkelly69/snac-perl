@@ -29,7 +29,7 @@ $options = {
 	USE_NEWLINES => 1
 };
 
-open my $fh, '<', $ARGV[0];
+open my $fh, '<', $input; #$ARGV[0];
 $/ = undef;
 my $xml = <$fh>;
 my @prefix = ();

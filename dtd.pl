@@ -15,6 +15,7 @@ sub getEntities {
 
     while ( $dtdString =~ /<!ENTITY\s+%\s+(.*)/s ) {
         $outString .= $`;
+        #print("1 {{{$1}}}\n");
         ( $pEntities, $dtdString ) = parsePEntity( $1, $pEntities );
     }
     $outString .= $dtdString;
@@ -73,14 +74,16 @@ sub parseDTD {
             $dtdString = $1;
             return $dtdString;
         }
-        elsif ( $dtdString =~ /^\s*<!\[INCLUDE\[\s+(.*)/s ) {
-            print "include\n";
-            $dtdString = parseDTD( $1, $out, $include );
+        elsif ( $dtdString =~ /^\s*<!\[INCLUDE\[\s+(.*?)]]>(.*)/s ) {
+            print "include [[[$1]]]\n";
+            $dtdString = parseDTD( $2, $out, $include );
+            return $dtdString;
         }
 
-        elsif ( $dtdString =~ /^\s*<!\[IGNORE\[\s+(.*)/s ) {
-            print "ignore\n";
-            $dtdString = parseDTD( $1, $out, 0 );
+        elsif ( $dtdString =~ /^\s*<!\[IGNORE\[\s+(.*?)]]>(.*)/s ) {
+            print "ignore [[[$1]]]\n";
+            $dtdString = parseDTD( $2, $out, $include );
+            return $dtdString;
         }
 
         else {
@@ -316,7 +319,7 @@ sub parseAttList {
             }
 
             else {
-                die("line fucked '$attList'\n");
+                die("line incorrect '$attList'\n");
             }
         }
 

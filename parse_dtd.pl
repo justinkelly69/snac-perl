@@ -5,74 +5,67 @@ use Data::Dumper;
 
 require "./dtd.pl";
 
-# printDTD('name* , value+, dirt, bag )');
-# printDTD('name | value| dirt| bag )');
-# printDTD('name* , value+, dirt, bag )+');
-# printDTD('name | value| dirt| bag )*');
-# printDTD('name* , value+, (house|on|fire)*, dirt, bag )+');
-# printDTD('name | value| (house*,on?,fire+)| dirt| bag )*');
+my $dtdString = <<EOF;
+<!ATTLIST biography xlink CDATA #FIXED    "http://www.w3.org/1999/xlink">
+<!ELEMENT person (first_name, last_name)>
+<!ATTLIST person born CDATA #IMPLIED
+                 died CDATA #IMPLIED>
 
-# printDTD('#PCDATA )');
-# printDTD('#PCDATA | name | value| dirt| bag )*');
-# printDTD('#PCDATA | name | value| (house*,on?,fire+)| dirt| bag )*');
-# printDTD(
-# '#PCDATA | (hello, world) | name | value| (house*,on?,fire+)| dirt| bag | (good, bye))*'
-# );
-# printDTD(
-#     '(hello|world), name , value, (house|on|fire)*, dirt, bag, (good| bye) )+'
-# );
+<!ELEMENT date   (month, day, year)>
+<!ELEMENT month  (#PCDATA)>
+<!ELEMENT day    (#PCDATA)>
+<!ELEMENT year   (#PCDATA)>
 
-sub printDTD {
-    my ($dtd) = @_;
-    $json = JSON->new->allow_nonref;
-    my ( $dtdOut, $kids ) = elementChildren($dtd);
-    print("$dtd\n");
-    print $json->pretty->encode($kids) . "\n";
-}
+<!-- xlink:href must contain a URI.-->
+<!ATTLIST emphasize type (simple|complex|easy) #REQUIRED
+                    href CDATA   #IMPLIED>
 
-my $dtd, $elements;
-$dtd = "
-<!ELEMENT name #ANY>
-<!ELEMENT value #EMPTY>
-<!ELEMENT message (#PCDATA | name | value| (house*,on?,fire+)| dirt| bag )*>
-";
+<!ATTLIST downsize toot NOTATION (simple|complex|easy) #REQUIRED
+                    href CDATA   #IMPLIED>                    
 
-# print("$dtd\n");
-# while ( $dtd =~ /\s*<!ELEMENT\s+(.*)/s ) {
-#     ( $dtd, $elements ) = printElement( $1, $elements );
-# }
+<!ENTITY stooges "larry|curly|moe">
 
-# $json = JSON->new->allow_nonref;
-# print $json->pretty->encode($elements) . "\n";
+<!ELEMENT profession (#PCDATA)>
+<!ELEMENT footnote   (#PCDATA)>
 
-my $attList, %attributes;
-$attList = "
-<!ATTLIST person
-    firstname CDATA #REQUIRED
-    middlename CDATA #IMPLIED
-    letters CDATA (alpha|beta|gamma|delta|epsilon) \"delta\"
-    lastname CDATA #FIXED 'Smith'
-    status CDATA \"gobshite\" 
+<!-- The source is given according to the Chicago Manual of Style
+     citation conventions -->
+<!ATTLIST footnote source CDATA #REQUIRED>
+
+<!ELEMENT first_name (#PCDATA)>
+<!ELEMENT last_name  (#PCDATA)>
+
+<![INCLUDE[
+     <!ATTLIST first_name text CDATA #FIXED "Fred">
+     <!ATTLIST last_name text CDATA #FIXED "Flintstone">
+]]>
+<![IGNORE[
+     <!ATTLIST first_name text CDATA #FIXED "Homer">
+     <!ATTLIST last_name text CDATA #FIXED "Simpson">
+]]>
+
+<!ELEMENT image EMPTY>
+<!ATTLIST image source CDATA   #REQUIRED
+                width  NMTOKEN #REQUIRED
+                height NMTOKEN #REQUIRED
+                ALT    CDATA   #IMPLIED
 >
-";
-if ( $attList =~ /\s*<!ATTLIST\s+(.*)/s ) {
-    printAttributes( $1, \%attributes );
-}
+<!ENTITY % top_level "( #PCDATA | image | paragraph | definition 
+                      | person | profession | emphasize | last_name
+                      | first_name | footnote | date )*">
 
-sub printAttributes {
-    my ( $attList, $attributes ) = @_;
-    $json = JSON->new->allow_nonref;
-    ( $attList, $attributes ) = parseAttList( $attList, $attributes );
-    print $json->pretty->encode($attributes) . "\n";
-}
+<!NOTATION gif  SYSTEM "image/gif">
+<!NOTATION tiff SYSTEM "image/tiff">
+<!NOTATION jpeg SYSTEM "image/jpeg">
+<!NOTATION png  SYSTEM "image/png">
+<!ATTLIST  image type (gif | tiff | jpeg | png) "png" >                      
 
-sub printElement {
-    my ($elementStr) = @_;
-    return parseElement( $elementStr, \%elements );
-}
+EOF
 
-my $attList, %attributes;
-$attList = "
+my $dtdString1 = <<EOF;
+<!ELEMENT name ANY>
+<!ELEMENT value EMPTY>
+<!ELEMENT message (#PCDATA | name | value| (house*,on?,fire+)| dirt| bag )*>
 <!ATTLIST person
     id ID #REQUIRED
     ssn ID #IMPLIED
@@ -90,90 +83,25 @@ $attList = "
     lastname CDATA #FIXED 'Smith'
     status CDATA \"god almighty\" 
 >
-hello world
-";
-
-if ( $attList =~ /\s*<!ATTLIST\s+(.*)/s ) {
-    $attList = $1;
-    printAttributes( $attList, \%attributes );
-}
-
-sub printAttributes {
-    my ( $attList, $attributes ) = @_;
-    print("before: $attList\n");
-
-    $json = JSON->new->allow_nonref;
-    ( $attList, $attributes ) = parseAttList( $attList, $attributes );
-    print $json->pretty->encode($attributes) . "\n";
-    
-    print("after: $attList\n");
-
-}
-
-my $notationList, %notations;
-$notationList = "
 <!NOTATION gif  SYSTEM \"image/gif\">
 <!NOTATION tiff SYSTEM \"image/tiff\">
 <!NOTATION jpeg SYSTEM \"image/jpeg\">
 <!NOTATION png  SYSTEM \"image/png\">
 <!NOTATION gif_image PUBLIC \"https://compuserve.com/images/gifs/v1\">
 <!NOTATION tiff_image PUBLIC \"https://compuserve.com/images/tiffs/v1\" \"image/tiff\">
-";
 
-#print("$notationList\n");
-#printNotations( $notationList, \%notations );
+EOF
 
-sub printNotations {
-    my ( $notationString, $notations ) = @_;
 
-    while ( $notationString =~ /^\s*<!NOTATION\s+(.*)/s ) {
-        ( $notations, $notationString ) = parseNotation( $1, $notations );
-    }
-    $json = JSON->new->allow_nonref;
-    print $json->pretty->encode($notations) . "\n";
-}
+my $myDtd = $dtdString;
+my %out;
 
-my $entityList, %entities;
-$entityList = "
-<!ENTITY name \"James P. Sullivan\">
-<!ENTITY helper \"Mike Wazowski\">
-<!ENTITY restaurant \"Harryhausens\">
-<!ENTITY boss SYSTEM \"https://theboss.com\">
-<!ENTITY turing_getting_off_bus
-          SYSTEM \"http://www.turing.org.uk/turing/pi1/bus.jpg\"
-          NDATA jpeg>
-";
+my ( $pEntities, $myDtd ) = getEntities($myDtd);
+$myDtd = removeComments($myDtd);
+#print "$dtdString\n";
 
-# print("$entityList\n");
-# printEntities( $entityList, \%entities );
+$json = JSON->new->allow_nonref;
+print "pentities: " . $json->pretty->encode($pEntities) . "\n";
 
-sub printEntities {
-    my ( $entityString, $entities ) = @_;
-
-    while ( $entityString =~ /^\s*<!ENTITY\s+(.*)/s ) {
-        ( $entities, $entityString ) = parseEntity( $1, $entities );
-    }
-    $json = JSON->new->allow_nonref;
-    print $json->pretty->encode($entities) . "\n";
-}
-
-my $pEntityList, %pentities;
-$pEntityList = "
-<!ENTITY % residential_content \"address, footage, rooms, baths\">
-<!ENTITY % rental_content      \"rent\">
-<!ENTITY % purchase_content    \"price\">
-<!ENTITY % names               SYSTEM \"names.dtd\">
-";
-
-# print("$pEntityList\n");
-# printPEntities( $pEntityList, \%pEntities );
-
-sub printPEntities {
-    my ( $pEntityString, $pEntities ) = @_;
-
-    while ( $pEntityString =~ /^\s*<!ENTITY\s+%\s+(.*)/s ) {
-        ( $pEntities, $pEntityString ) = parseEntity( $1, $pEntities );
-    }
-    $json = JSON->new->allow_nonref;
-    print $json->pretty->encode($pEntities) . "\n";
-}
+my $dtd = parseDTD( $myDtd, \%out, 1);
+print "DTD: " . $json->pretty->encode(\%out) . "\n";
