@@ -1,22 +1,21 @@
-#!/home/jk/opt/perl/bin/perl
-
-use JSON;
-use Data::Dumper;
-
-require "./dtd.pl";
-
-my $dtdString = <<EOF;
 <!ENTITY % coreattrs 
      "id    ID    #IMPLIED
      class CDATA #IMPLIED
      style CDATA #IMPLIED
      title CDATA #IMPLIED"
 >
-...
+<!ENTITY % misc "(#PCDATA , alpha+ , beta?, gamma* )">
+<!ENTITY % special "(big,small)">
+<!ENTITY % fontstyle "(bold | italic | underline)">
+<!ENTITY % phrase "(proverb , psalm, waffle)">
+<!ENTITY % inline.forms "(input|text)">
+<!ENTITY % i18n "en_GB">
+<!ENTITY % events "(#PCDATA , onClick , onHover , onFocus,onBlur)">
+
 <!ENTITY % attrs "%coreattrs; %i18n; %events;">
-...
 <!ENTITY % inline "a|%special;|%fontstyle;|%phrase;|%inline.forms;">
 <!ENTITY % Inline "(#PCDATA | %inline; | %misc;)*">
+<!ENTITY % Outline "(#PCDATA , %inline; , %misc;)*">
 <!ELEMENT h1 %Inline;>
 <!ATTLIST h1
 %attrs;
@@ -80,58 +79,4 @@ my $dtdString = <<EOF;
 <!NOTATION tiff SYSTEM "image/tiff">
 <!NOTATION jpeg SYSTEM "image/jpeg">
 <!NOTATION png  SYSTEM "image/png">
-<!ATTLIST  image type (gif | tiff | jpeg | png) "png" >                      
-
-EOF
-
-my $dtdString1 = <<EOF;
-<!ELEMENT name ANY>
-<!ELEMENT value EMPTY>
-<!ELEMENT message (#PCDATA | name | value| (house*,on?,fire+)| dirt| bag )*>
-<!ATTLIST person
-    id ID #REQUIRED
-    ssn ID #IMPLIED
-    noname CDATA
-    idref IDREF #IMPLIED
-    idrefs IDREFS #IMPLIED
-    nmtoken NMTOKEN #IMPLIED
-    nmtokens NMTOKENS #REQUIRED
-    entity ENTITY #IMPLIED
-    entities ENTITIES #REQUIRED
-    notation NOTATION #REQUIRED
-    firstname CDATA #REQUIRED
-    middlename CDATA #IMPLIED
-    letters (alpha|beta|gamma|delta|epsilon) \"delta\"
-    lastname CDATA #FIXED 'Smith'
-    status CDATA \"god almighty\" 
->
-<![INCLUDE[
-     <!ATTLIST first_name text CDATA #FIXED "Fred">
-     <!ATTLIST last_name text CDATA #FIXED "Flintstone">
-]]>
-<![IGNORE[
-     <!ATTLIST first_name text CDATA #FIXED "Homer">
-     <!ATTLIST last_name text CDATA #FIXED "Simpson">
-]]>
-<!NOTATION gif  SYSTEM \"image/gif\">
-<!NOTATION tiff SYSTEM \"image/tiff\">
-<!NOTATION jpeg SYSTEM \"image/jpeg\">
-<!NOTATION png  SYSTEM \"image/png\">
-<!NOTATION gif_image PUBLIC \"https://compuserve.com/images/gifs/v1\">
-<!NOTATION tiff_image PUBLIC \"https://compuserve.com/images/tiffs/v1\" \"image/tiff\">
-
-EOF
-
-
-my $myDtd = $dtdString;
-my %out;
-
-my ( $pEntities, $myDtd ) = getEntities($myDtd);
-$myDtd = removeComments($myDtd);
-#print "$dtdString\n";
-
-$json = JSON->new->allow_nonref;
-print "pentities: " . $json->pretty->encode($pEntities) . "\n";
-
-my $dtd = parseDTD( $myDtd, \%out, 1);
-print "DTD: " . $json->pretty->encode(\%out) . "\n";
+<!ATTLIST  image type (gif | tiff | jpeg | png) "png" >     

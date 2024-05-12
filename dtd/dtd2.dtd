@@ -1,0 +1,34 @@
+<!ELEMENT name ANY>
+<!ELEMENT value EMPTY>
+<!ELEMENT message (#PCDATA | name | value| (house*,on?,fire+)| dirt| bag )*>
+<!ATTLIST person
+    id ID #REQUIRED
+    ssn ID #IMPLIED
+    noname CDATA
+    idref IDREF #IMPLIED
+    idrefs IDREFS #IMPLIED
+    nmtoken NMTOKEN #IMPLIED
+    nmtokens NMTOKENS #REQUIRED
+    entity ENTITY #IMPLIED
+    entities ENTITIES #REQUIRED
+    notation NOTATION #REQUIRED
+    firstname CDATA #REQUIRED
+    middlename CDATA #IMPLIED
+    letters (alpha|beta|gamma|delta|epsilon) "delta"
+    lastname CDATA #FIXED 'Smith'
+    status CDATA "god almighty" 
+>
+<![INCLUDE[
+     <!ATTLIST first_name text CDATA #FIXED "Fred">
+     <!ATTLIST last_name text CDATA #FIXED "Flintstone">
+]]>
+<![IGNORE[
+     <!ATTLIST first_name text CDATA #FIXED "Homer">
+     <!ATTLIST last_name text CDATA #FIXED "Simpson">
+]]>
+<!NOTATION gif  SYSTEM "image/gif">
+<!NOTATION tiff SYSTEM "image/tiff">
+<!NOTATION jpeg SYSTEM "image/jpeg">
+<!NOTATION png  SYSTEM "image/png">
+<!NOTATION gif_image PUBLIC "https://compuserve.com/images/gifs/v1">
+<!NOTATION tiff_image PUBLIC "https://compuserve.com/images/tiffs/v1" "image/tiff">

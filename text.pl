@@ -67,11 +67,11 @@ sub getString {
     my ( $string, $quoteChar ) = @_;
 
     for my $i ( 0 .. length($string) - 1 ) {
-        if (   substr( $string, $i, 1 ) =~ m!^$quoteChar$!
-            && substr( $string, $i - 1, 1 ) !~ m!^\\$! )
+        if (   substr( $string, $i, 1 ) =~ m!^$quoteChar$! # character is " or '
+            && substr( $string, $i - 1, 1 ) !~ m!^\\$! )   # preceding character is not \
         {
             $value = substr( $string, 0, $i );
-            $value =~ s!\\$quoteChar!$quoteChar!g;
+            $value =~ s!\\$quoteChar!$quoteChar!g; # \' to ' \" to "
             $value  = unEscapeHtml($value);
             $string = substr( $string, $i + 1 );
             return ( $value, $string );
@@ -79,6 +79,19 @@ sub getString {
     }
 
     die "BAD STRING '$string'\n";
+}
+
+sub normalizeString {
+    my( $string ) = @_;
+
+    my @lines = split(/\s+/, $string);
+    $string = join(' ', @lines);
+    $string =~ s/\s*\|\s*/ | /g;
+    $string =~ s/\s*,\s*/ , /g;
+    $string =~ s/\(\s+/(/g;
+    $string =~ s/\s+\)/)/g;
+
+    return trim($string);
 }
 
 1;
