@@ -14,7 +14,7 @@
 
 <!ENTITY % attrs "%coreattrs; %i18n; %events;">
 <!ENTITY % inline "a|%special;|%fontstyle;|%phrase;|%inline.forms;">
-<!ENTITY % Inline "(#PCDATA | %inline; | %misc;)*">
+<!ENTITY % Inline "(#PCDATA | %inline; | %misc; | %attrs; )*">
 <!ENTITY % Outline "(#PCDATA , %inline; , %misc;)*">
 <!ELEMENT h1 %Inline;>
 <!ATTLIST h1
