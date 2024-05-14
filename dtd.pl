@@ -19,7 +19,7 @@ my $dtd;
     close $fh;
 }
 
-my ($entities, $dtdString) = getEntities($dtd);
+my ($entities, $dtdString) = get_entities($dtd);
 
 
 #print "DTD:\n---------------------------\n$dtd\n";
@@ -27,9 +27,9 @@ my ($entities, $dtdString) = getEntities($dtd);
 my $json = JSON->new->allow_nonref;
 print "pentities:\n---------------------------\n" . $json->pretty->encode($entities) . "\n";
 
-my ($noEntitiesArray, $entitiesArray) = evaluateEntities($entities, $noEntitiesArray, $entitiesArray);
+my ($noEntitiesArray, $entitiesArray) = evaluate_entities($entities, $noEntitiesArray, $entitiesArray);
 
-my $dtd_out = parsePEntities($dtdString, $noEntitiesArray);
+my $dtd_out = parse_pentities($dtdString, $noEntitiesArray);
 print "$dtd\n---------------------------------\n$dtd_out\n";
 
 

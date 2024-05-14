@@ -1,5 +1,5 @@
 
-sub parsePEntities {
+sub parse_pentities {
     my($dtd_text, $entities) = @_;
 
     foreach $key (keys(%$entities)) {
@@ -13,7 +13,7 @@ sub parsePEntities {
 
 # $p_entities = hash ref of parsed entities
 # $out_string = DTD with <!ENTITIES removed
-sub getEntities {
+sub get_entities {
     my ($dtd_string) = @_;
     my %p_entities;
     my $out_string;
@@ -22,7 +22,7 @@ sub getEntities {
     while ( $dtd_string =~ /<!ENTITY\s+%\s+(.*)/s ) { # Get each entity
         $out_string .= $`;  # concat it to the previous $out_string
         chomp($out_string);
-        ( $p_entities, $dtd_string ) = parsePEntity( $1, $p_entities );
+        ( $p_entities, $dtd_string ) = parse_pentity( $1, $p_entities );
     }
     $out_string .= $dtd_string;
 
@@ -31,7 +31,7 @@ sub getEntities {
 
 # <!ENTITY % residential_content "address, footage, rooms, bedrooms, baths, available_date">
 # <!ENTITY % names SYSTEM "names.dtd">
-sub parsePEntity {
+sub parse_pentity {
     my ( $entity_string, $entities ) = @_;
     my $entity_name, $entity_value;
 
@@ -65,7 +65,7 @@ sub parsePEntity {
 
 # Checks whether an array value has %name;s
 # and places it in %no_entities_array if it does
-sub evaluateEntities {
+sub evaluate_entities {
     my($entity_array, $no_entities_array) = (@_);
     my %entities_array;
 
@@ -73,7 +73,7 @@ sub evaluateEntities {
 
     while(($key, $value) = each(%$entity_array)) {
 
-        $value = processEntityValue($no_entities_array, $value);
+        $value = process_entity_value($no_entities_array, $value);
 
         if($value !~ /%[.A-Za-z0-9_-]+;/) {
             $no_entities_array->{$key} = $value;
@@ -104,7 +104,7 @@ sub evaluateEntities {
         while(($key, $value) = each(%entities_array)) {
             $x_key = $key;
             $x_value = $value;
-            $value = processEntityValue($no_entities_array, $value);
+            $value = process_entity_value($no_entities_array, $value);
 
             if($value !~ /%[.A-Za-z0-9_-]+;/) {
                 $no_entities_array->{$key} = $value;
@@ -124,7 +124,7 @@ sub evaluateEntities {
     return ($no_entities_array, $entities_array);
 }
 
-sub processEntityValue {
+sub process_entity_value {
     my($no_entities_array, $entities_value) = @_;
     my @names = split(/%/, $entities_value);
     my $out = $names[0];
