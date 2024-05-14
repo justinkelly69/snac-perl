@@ -7,15 +7,16 @@
 <!ENTITY % misc "(#PCDATA , alpha+ , beta?, gamma* )">
 <!ENTITY % special "(big,small)">
 <!ENTITY % fontstyle "bold | italic | underline">
-<!ENTITY % phrase "  (proverb , psalm, waffle)">
+<!ENTITY % phrase "(proverb , psalm, waffle)">
 <!ENTITY % inline.forms "(input|text)">
-<!ENTITY % i18n "en_GB">
+<!ENTITY % i18n  "en_GB">
 <!ENTITY % events "(#PCDATA , onClick , onHover , onFocus,onBlur)">
 
 <!ENTITY % attrs "%coreattrs;">
 <!ENTITY % inline "a|%special;|%fontstyle;|%phrase;|%inline.forms;">
 <!ENTITY % Inline "(#PCDATA  %inline;)*">
-<!ENTITY % Outline "(#PCDATA %inline;)*">
+<!ENTITY % v1 "IGNORE">
+<!ENTITY % v2 "INCLUDE">
 <!ELEMENT h1 %Inline;>
 <!ATTLIST h1
 %attrs;
@@ -49,11 +50,11 @@
 <!ELEMENT first_name (#PCDATA)>
 <!ELEMENT last_name  (#PCDATA)>
 
-<![INCLUDE[
+<![%v1;[
      <!ATTLIST first_name text CDATA #FIXED "Fred">
      <!ATTLIST last_name text CDATA #FIXED "Flintstone">
 ]]>
-<![IGNORE[
+<![%v2;[
      <!ATTLIST first_name text CDATA #FIXED "Homer">
      <!ATTLIST last_name text CDATA #FIXED "Simpson">
 ]]>
@@ -67,11 +68,11 @@
 <!ENTITY % top_level "( #PCDATA | image | paragraph | definition 
                       | person | profession | emphasize | last_name
                       | first_name | footnote | date )*">
-<![INCLUDE[
+<![%v1;[
      <!ATTLIST first_name text CDATA #FIXED "Fred">
      <!ATTLIST last_name text CDATA #FIXED "Flintstone">
 ]]>
-<![IGNORE[
+<![%v2;[
      <!ATTLIST first_name text CDATA #FIXED "Homer">
      <!ATTLIST last_name text CDATA #FIXED "Simpson">
 ]]>

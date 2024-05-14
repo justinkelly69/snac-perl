@@ -1,3 +1,16 @@
+
+sub parsePEntities {
+    my($dtd_text, $entities) = @_;
+
+    foreach $key (keys(%$entities)) {
+        my @segments = split(/%$key;/, $dtd_text);
+        $dtd_text = join($entities->{$key}, @segments);
+    }
+
+    return $dtd_text;
+}
+
+
 # $pEntities = hash ref of parsed entities
 # $outString = DTD with <!ENTITIES removed
 sub getEntities {
@@ -75,12 +88,18 @@ sub evaluateEntities {
     my $newSize = 0;
     my $xKey = "*";
     my $xValue = "*";
+    my $tries = 0;
 
     while(keys(%entitiesArray)){
 
         if($newSize >= $oldSize - 1){
-            die "Invalid key $xKey -> $xValue\n";
+            $tries++;
         }
+        else {
+            $tries = 0;
+        }
+
+        die  "$tries Invalid key $xKey -> $xValue\n" if ($tries == 3);
 
         while(($key, $value) = each(%entitiesArray)) {
             $xKey = $key;
