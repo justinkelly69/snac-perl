@@ -64,7 +64,6 @@ sub evaluateEntities {
 
         if($value !~ /%[.A-Za-z0-9_-]+;/) {
             $noEntitiesArray->{$key} = $value;
-            #delete($entitiesArray{$key});
         }
         else {
             $entitiesArray{$key} = $value;
@@ -72,19 +71,20 @@ sub evaluateEntities {
 
     }
 
- 
     my $oldSize = keys(%entitiesArray);
     my $newSize = 0;
+    my $xKey = "*";
+    my $xValue = "*";
 
     while(keys(%entitiesArray)){
-        print("oldSize: $oldSize, newSize: $newSize\n");
 
         if($newSize >= $oldSize - 1){
-            die ("Invalid key $!\n");
+            die "Invalid key $xKey -> $xValue\n";
         }
 
         while(($key, $value) = each(%entitiesArray)) {
- 
+            $xKey = $key;
+            $xValue = $value;
             $value = processEntityValue($noEntitiesArray, $value);
 
             if($value !~ /%[.A-Za-z0-9_-]+;/) {

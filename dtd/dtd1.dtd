@@ -7,7 +7,7 @@
 <!ENTITY % misc "(#PCDATA , alpha+ , beta?, gamma* )">
 <!ENTITY % special "(big,small)">
 <!ENTITY % fontstyle "bold | italic | underline">
-<!ENTITY % phrase "(proverb , psalm, waffle)">
+<!ENTITY % phrase "  (proverb , psalm, waffle)">
 <!ENTITY % inline.forms "(input|text)">
 <!ENTITY % i18n "en_GB">
 <!ENTITY % events "(#PCDATA , onClick , onHover , onFocus,onBlur)">
