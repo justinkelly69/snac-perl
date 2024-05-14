@@ -21,15 +21,15 @@ my $dtd;
 
 my ($entities, $dtdString) = getEntities($dtd);
 
-print "DTD:\n---------------------------\n$dtd\n";
+#print "DTD:\n---------------------------\n$dtd\n";
 
 my $json = JSON->new->allow_nonref;
 print "pentities:\n---------------------------\n" . $json->pretty->encode($entities) . "\n";
 
-my ($noEntitiesArray, $entitiesArray) = evaluateEntities($entities);
-print "noEntitiesArray:\n---------------------------\n" . $json->pretty->encode($noEntitiesArray) . "\n";
-print "entitiesArray:\n---------------------------\n" . $json->pretty->encode($entitiesArray) . "\n";
+my ($noEntitiesArray, $entitiesArray) = evaluateEntities($entities, $noEntitiesArray, $entitiesArray);
+#print "noEntitiesArray:\n---------------------------\n" . $json->pretty->encode($noEntitiesArray) . "\n";
+#print "entitiesArray:\n---------------------------\n" . $json->pretty->encode($entitiesArray) . "\n";
 
-print "DTDString:\n---------------------------\n$dtdString\n";
+#print "DTDString:\n---------------------------\n$dtdString\n";
 
 

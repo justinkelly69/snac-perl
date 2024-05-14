@@ -6,16 +6,16 @@
 >
 <!ENTITY % misc "(#PCDATA , alpha+ , beta?, gamma* )">
 <!ENTITY % special "(big,small)">
-<!ENTITY % fontstyle "(bold | italic | underline)">
+<!ENTITY % fontstyle "bold | italic | underline">
 <!ENTITY % phrase "(proverb , psalm, waffle)">
 <!ENTITY % inline.forms "(input|text)">
 <!ENTITY % i18n "en_GB">
 <!ENTITY % events "(#PCDATA , onClick , onHover , onFocus,onBlur)">
 
-<!ENTITY % attrs "%coreattrs; %i18n; %events;">
+<!ENTITY % attrs "%coreattrs;">
 <!ENTITY % inline "a|%special;|%fontstyle;|%phrase;|%inline.forms;">
-<!ENTITY % Inline "(#PCDATA | %inline; | %misc; | %attrs; )*">
-<!ENTITY % Outline "(#PCDATA , %inline; , %misc;)*">
+<!ENTITY % Inline "(#PCDATA  %inline;)*">
+<!ENTITY % Outline "(#PCDATA %inline;)*">
 <!ELEMENT h1 %Inline;>
 <!ATTLIST h1
 %attrs;

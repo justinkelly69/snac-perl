@@ -1,12 +1,13 @@
-
+# $pEntities = hash ref of parsed entities
+# $outString = DTD with <!ENTITIES removed
 sub getEntities {
     my ($dtdString) = @_;
     my %pEntities;
     my $outString;
     my $pEntities = \%pEntities;
 
-    while ( $dtdString =~ /<!ENTITY\s+%\s+(.*)/s ) {
-        $outString .= $`;
+    while ( $dtdString =~ /<!ENTITY\s+%\s+(.*)/s ) { # Get each entity
+        $outString .= $`;  # concat it to the previous $outString
         chomp($outString);
         ( $pEntities, $dtdString ) = parsePEntity( $1, $pEntities );
     }
@@ -49,93 +50,83 @@ sub parsePEntity {
     }
 }
 
-sub evaluateEntities0 {
-    my($entityArray) = (@_);
-    return sortEntities($entityArray);
-}
-
+# Checks whether an array value has %name;s
+# and places it in %noEntitiesArray if it does
 sub evaluateEntities {
-    my($entityArray) = (@_);
-    my ($noEntitiesArray, $entitiesArray) = sortEntities($entityArray, $noEntitiesArray);
-
-    #print ("keylength " . keys(%$entitiesArray) . "\n");
-    #print ("keylength " . keys(%$noEntitiesArray) . "\n");
-
-    for(keys(%$entitiesArray)) {
-        print("entitiesArray key: $_\n");
-        $entitiesArray->{$_} = insertEntityValues($entitiesArray->{$_}, $noEntitiesArray);
-    }
-    ($noEntitiesArray, $entitiesArray) = sortEntities($entitiesArray, $noEntitiesArray);
-
-    return (\%noEntitiesArray, \%entitiesArray);
-}
-
-# Split a strring with %name;s and replace them with values
-sub insertEntityValues {
-    my ($entitiesString, $noEntitiesArray) = @_;
-
-    print("entitiesString: $entitiesString\n");
-
-    my @entityValues = split( '%', $entitiesString);
-    my $out = "";
+    my($entityArray, $noEntitiesArray) = (@_);
+    my %entitiesArray;
 
     my $json = JSON->new->allow_nonref;
-    print("entityValues: "    . $json->pretty->encode($entityValues)    . "\n");
-    print("noEntitiesArray: " . $json->pretty->encode($noEntitiesArray) . "\n");
 
-    for $entityValue (@entityValues) {
-        #print("(entityValue: [[$entityValue]])\n");
+    while(($key, $value) = each(%$entityArray)) {
 
-        $entityValue =~ /^([.A-Za-z0-9_-]+);(.*)/;
-        print("1 (($1)) (($2)) \"" . $noEntitiesArray->{$1} ."\"");
-        if($noEntitiesArray->{$1}){
-            print " true\n";
-            $out .= $noEntitiesArray->{$1} . $2;
+        $value = processEntityValue($noEntitiesArray, $value);
+
+        if($value !~ /%[.A-Za-z0-9_-]+;/) {
+            $noEntitiesArray->{$key} = $value;
+            #delete($entitiesArray{$key});
         }
         else {
-            print " false\n";
+            $entitiesArray{$key} = $value;
+        }
+
+    }
+
+ 
+    my $oldSize = keys(%entitiesArray);
+    my $newSize = 0;
+
+    while(keys(%entitiesArray)){
+        print("oldSize: $oldSize, newSize: $newSize\n");
+
+        if($newSize >= $oldSize - 1){
+            die ("Invalid key $!\n");
+        }
+
+        while(($key, $value) = each(%entitiesArray)) {
+ 
+            $value = processEntityValue($noEntitiesArray, $value);
+
+            if($value !~ /%[.A-Za-z0-9_-]+;/) {
+                $noEntitiesArray->{$key} = $value;
+                delete($entitiesArray{$key});
+            }
+            else {
+                $entitiesArray{$key} = $value;
+            }
+
+        }
+        $newSize = keys(%entitiesArray);
+    }
+
+    print("final noEntitiesArray: " . $json->pretty->encode($noEntitiesArray) . "\n");
+    print("final entitiesArray: "   . $json->pretty->encode(\%entitiesArray)   . "\n");
+
+    return ($noEntitiesArray, $entitiesArray);
+}
+
+sub processEntityValue {
+    my($noEntitiesArray, $entitiesValue) = @_;
+    my @names = split(/%/, $entitiesValue);
+    my $out = $names[0];
+
+    my $json = JSON->new->allow_nonref;
+
+    for(my $i = 1; $i < @names; $i++) {
+        if ($names[$i] =~ /^([.A-Za-z0-9_-]+);(.*)$/){
+
+            if($noEntitiesArray->{$1}) {
+                $out .= $noEntitiesArray->{$1} . $2;
+            }
+            else {
+                $out .= "%$1;$2";
+            }
+        }
+        else {
             $out .= "%$1;$2";
         }
     }
-
-    print "out: $out\n";
-
     return $out;
-}
-
-# Checks whether an array value has %name;s
-# and places it in %noEntitiesArray if it does
-sub sortEntities {
-    my($entityArray, $noEntitiesArray) = (@_);
-
-    my %entitiesArray;
-    my %noEntitiesArray = %$noEntitiesArray;
-    my %entityArray = %$entityArray;
-
-    my $json = JSON->new->allow_nonref;
-
-    #print("entityArray: " . $json->pretty->encode($entityArray) . "\n");
-    #print ("keylength entityArray before: " . keys(%entityArray) . "\n");
-
-    #print("noEntitiesArray: " . $json->pretty->encode($noEntitiesArray) . "\n");
-    #print ("keylength noEntitiesArray before: " . keys(%noEntitiesArray) . "\n");
-
-    while(($key, $value) = each(%entityArray)) {
-        #print("sortEntries key:$key ");
-        if($value !~ /%[.A-Za-z0-9_-]+;/) {
-            #print("true $value\n");
-            $noEntitiesArray{$key} = $value;
-        }
-        else {
-            #print("false $value\n");
-            $entitiesArray{$key} = $value;
-        }
-    }
-
-    #print ("keylength entitiesArray after: " . keys(%entitiesArray) . "\n");
-    #print ("keylength noEntitiesArray after: " . keys(%noEntitiesArray) . "\n");
-
-    return (\%noEntitiesArray, \%entitiesArray);
 }
 
 1;
