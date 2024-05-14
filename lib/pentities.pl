@@ -11,51 +11,51 @@ sub parsePEntities {
 }
 
 
-# $pEntities = hash ref of parsed entities
-# $outString = DTD with <!ENTITIES removed
+# $p_entities = hash ref of parsed entities
+# $out_string = DTD with <!ENTITIES removed
 sub getEntities {
-    my ($dtdString) = @_;
-    my %pEntities;
-    my $outString;
-    my $pEntities = \%pEntities;
+    my ($dtd_string) = @_;
+    my %p_entities;
+    my $out_string;
+    my $p_entities = \%p_entities;
 
-    while ( $dtdString =~ /<!ENTITY\s+%\s+(.*)/s ) { # Get each entity
-        $outString .= $`;  # concat it to the previous $outString
-        chomp($outString);
-        ( $pEntities, $dtdString ) = parsePEntity( $1, $pEntities );
+    while ( $dtd_string =~ /<!ENTITY\s+%\s+(.*)/s ) { # Get each entity
+        $out_string .= $`;  # concat it to the previous $out_string
+        chomp($out_string);
+        ( $p_entities, $dtd_string ) = parsePEntity( $1, $p_entities );
     }
-    $outString .= $dtdString;
+    $out_string .= $dtd_string;
 
-    return ( $pEntities, $outString );
+    return ( $p_entities, $out_string );
 }
 
 # <!ENTITY % residential_content "address, footage, rooms, bedrooms, baths, available_date">
 # <!ENTITY % names SYSTEM "names.dtd">
 sub parsePEntity {
-    my ( $entityStr, $entities ) = @_;
-    my $entityName, $entityValue;
+    my ( $entity_string, $entities ) = @_;
+    my $entity_name, $entity_value;
 
-    if ( $entityStr =~ /^\s*($name_pattern)\s+(.*)/s ) {
-        $entityName = $1;
-        $entityStr  = $2;
+    if ( $entity_string =~ /^\s*($name_pattern)\s+(.*)/s ) {
+        $entity_name = $1;
+        $entity_string  = $2;
 
-        if ( $entityStr =~ /^\s*(["'])(.*)/s ) {
-            ( $entityValue, $entityStr ) = getString( $2, $1 );
-            $$entities{$entityName} = normalizeString($entityValue);
+        if ( $entity_string =~ /^\s*(["'])(.*)/s ) {
+            ( $entity_value, $entity_string ) = getString( $2, $1 );
+            $$entities{$entity_name} = normalizeString($entity_value);
         }
 
-        elsif ( $entityStr =~ /^\s*SYSTEM\s*(["'])(.*)/s ) {
-            ( $entityValue, $entityStr ) = getString( $2, $1 );
-            $$entities{$entityName}{'SYSTEM'} = normalizeString($entityValue);
+        elsif ( $entity_string =~ /^\s*SYSTEM\s*(["'])(.*)/s ) {
+            ( $entity_value, $entity_string ) = getString( $2, $1 );
+            $$entities{$entity_name}{'SYSTEM'} = normalizeString($entity_value);
         }
 
         else {
-            die("no entity $entityName, $entityStr\n");
+            die("no entity $entity_name, $entity_string\n");
         }
 
-        if ( $entityStr =~ /^\s*>(.*)/s ) {
-            $entityStr = $1;
-            return ( $entities, $entityStr );
+        if ( $entity_string =~ /^\s*>(.*)/s ) {
+            $entity_string = $1;
+            return ( $entities, $entity_string );
         }
     }
     else {
@@ -64,69 +64,69 @@ sub parsePEntity {
 }
 
 # Checks whether an array value has %name;s
-# and places it in %noEntitiesArray if it does
+# and places it in %no_entities_array if it does
 sub evaluateEntities {
-    my($entityArray, $noEntitiesArray) = (@_);
-    my %entitiesArray;
+    my($entity_array, $no_entities_array) = (@_);
+    my %entities_array;
 
     my $json = JSON->new->allow_nonref;
 
-    while(($key, $value) = each(%$entityArray)) {
+    while(($key, $value) = each(%$entity_array)) {
 
-        $value = processEntityValue($noEntitiesArray, $value);
+        $value = processEntityValue($no_entities_array, $value);
 
         if($value !~ /%[.A-Za-z0-9_-]+;/) {
-            $noEntitiesArray->{$key} = $value;
+            $no_entities_array->{$key} = $value;
         }
         else {
-            $entitiesArray{$key} = $value;
+            $entities_array{$key} = $value;
         }
 
     }
 
-    my $oldSize = keys(%entitiesArray);
-    my $newSize = 0;
-    my $xKey = "*";
-    my $xValue = "*";
+    my $old_size = keys(%entities_array);
+    my $new_size = 0;
+    my $x_key = "*";
+    my $x_value = "*";
     my $tries = 0;
 
-    while(keys(%entitiesArray)){
+    while(keys(%entities_array)){
 
-        if($newSize >= $oldSize - 1){
+        if($new_size >= $old_size - 1){
             $tries++;
         }
         else {
             $tries = 0;
         }
 
-        die  "$tries Invalid key $xKey -> $xValue\n" if ($tries == 3);
+        die  "$tries Invalid key $x_key -> $x_value\n" if ($tries == 3);
 
-        while(($key, $value) = each(%entitiesArray)) {
-            $xKey = $key;
-            $xValue = $value;
-            $value = processEntityValue($noEntitiesArray, $value);
+        while(($key, $value) = each(%entities_array)) {
+            $x_key = $key;
+            $x_value = $value;
+            $value = processEntityValue($no_entities_array, $value);
 
             if($value !~ /%[.A-Za-z0-9_-]+;/) {
-                $noEntitiesArray->{$key} = $value;
-                delete($entitiesArray{$key});
+                $no_entities_array->{$key} = $value;
+                delete($entities_array{$key});
             }
             else {
-                $entitiesArray{$key} = $value;
+                $entities_array{$key} = $value;
             }
 
         }
-        $newSize = keys(%entitiesArray);
+        $new_size = keys(%entities_array);
     }
 
-    print("final noEntitiesArray: " . $json->pretty->encode($noEntitiesArray) . "\n");
-    print("final entitiesArray: "   . $json->pretty->encode(\%entitiesArray)   . "\n");
+    print("final no_entities_array: " . $json->pretty->encode($no_entities_array) . "\n");
+    print("final entities_array: "   . $json->pretty->encode(\%entities_array)   . "\n");
 
-    return ($noEntitiesArray, $entitiesArray);
+    return ($no_entities_array, $entities_array);
 }
 
 sub processEntityValue {
-    my($noEntitiesArray, $entitiesValue) = @_;
-    my @names = split(/%/, $entitiesValue);
+    my($no_entities_array, $entities_value) = @_;
+    my @names = split(/%/, $entities_value);
     my $out = $names[0];
 
     my $json = JSON->new->allow_nonref;
@@ -134,8 +134,8 @@ sub processEntityValue {
     for(my $i = 1; $i < @names; $i++) {
         if ($names[$i] =~ /^([.A-Za-z0-9_-]+);(.*)$/){
 
-            if($noEntitiesArray->{$1}) {
-                $out .= $noEntitiesArray->{$1} . $2;
+            if($no_entities_array->{$1}) {
+                $out .= $no_entities_array->{$1} . $2;
             }
             else {
                 $out .= "%$1;$2";
