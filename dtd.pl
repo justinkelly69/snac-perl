@@ -4,11 +4,10 @@ use Data::Dumper;
 use JSON;
 use String::Util qw(trim);
 
-require "./lib/pentities.pl";
-require "./lib/text.pl";
-
-$name_pattern = '[.A-Za-z0-9_-]+';
-$ATT_TYPES    = 'ID|IDREF|IDREFS|NMTOKEN|NMTOKENS|ENTITY|ENTITIES|NOTATION';
+BEGIN {
+    use lib './modules';
+}
+use SNAC::DTD::PEntities;
 
 
 my $dtd;
@@ -19,23 +18,12 @@ my $dtd;
     close $fh;
 }
 
-my ($entities, $dtdString) = get_entities($dtd);
-
-
-#print "DTD:\n---------------------------\n$dtd\n";
+my ($entities, $dtdString) = get_pentities($dtd);
 
 my $json = JSON->new->allow_nonref;
 print "pentities:\n---------------------------\n" . $json->pretty->encode($entities) . "\n";
 
-my ($noEntitiesArray, $entitiesArray) = evaluate_entities($entities, $noEntitiesArray, $entitiesArray);
+my ($noEntitiesArray, $entitiesArray) = evaluate_pentities($entities, $noEntitiesArray, $entitiesArray);
 
-my $dtd_out = parse_pentities($dtdString, $noEntitiesArray);
+my $dtd_out = parse($dtd);
 print "$dtd\n---------------------------------\n$dtd_out\n";
-
-
-#print "noEntitiesArray:\n---------------------------\n" . $json->pretty->encode($noEntitiesArray) . "\n";
-#print "entitiesArray:\n---------------------------\n" . $json->pretty->encode($entitiesArray) . "\n";
-
-#print "DTDString:\n---------------------------\n$dtdString\n";
-
-

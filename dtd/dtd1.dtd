@@ -7,9 +7,7 @@
 <!ENTITY % misc "(#PCDATA , alpha+ , beta?, gamma* )">
 <!ENTITY % special "(big,small)">
 <!ENTITY % fontstyle "bold | italic | underline">
-<!ENTITY % phrase "(proverb , psalm, waffle)">
-<!ENTITY % inline.forms "(input|text)">
-<!ENTITY % i18n  "en_GB">
+
 <!ENTITY % events "(#PCDATA , onClick , onHover , onFocus,onBlur)">
 
 <!ENTITY % attrs "%coreattrs;">
@@ -25,6 +23,10 @@
 <!ELEMENT person (first_name, last_name)>
 <!ATTLIST person born CDATA #IMPLIED
                  died CDATA #IMPLIED>
+
+                 <!ENTITY % phrase "(proverb , psalm, waffle)">
+<!ENTITY % inline.forms "(input|text)">
+<!ENTITY % i18n  "en_GB">
 
 <!ELEMENT date   (month, day, year)>
 <!ELEMENT month  (#PCDATA)>
