@@ -11,7 +11,7 @@
 <!ENTITY % events "(#PCDATA , onClick , onHover , onFocus,onBlur)">
 
 <!ENTITY % attrs "%coreattrs;">
-<!ENTITY % inline "a|%special;|%fontstyle;|%phrase;|%inline.forms;">
+<!ENTITY % inline "|a|%special;|%fontstyle;|%phrase;|%inline.forms;">
 <!ENTITY % Inline "(#PCDATA  %inline;)*">
 <!ENTITY % v1 "IGNORE">
 <!ENTITY % v2 "INCLUDE">
@@ -45,8 +45,6 @@
 <!ELEMENT profession (#PCDATA)>
 <!ELEMENT footnote   (#PCDATA)>
 
-<!-- The source is given according to the Chicago Manual of Style
-     citation conventions -->
 <!ATTLIST footnote source CDATA #REQUIRED>
 
 <!ELEMENT first_name (#PCDATA)>

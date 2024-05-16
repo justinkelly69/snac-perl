@@ -14,6 +14,7 @@ our @EXPORT = qw(
     trim 
     get_string 
     normalize_string
+    name_pattern
 );
 
 our $name_pattern = '[.A-Za-z0-9_-]+';

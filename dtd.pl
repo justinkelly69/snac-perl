@@ -7,8 +7,8 @@ use String::Util qw(trim);
 BEGIN {
     use lib './modules';
 }
-use SNAC::DTD::PEntities;
 
+use SNAC::DTD;
 
 my $dtd;
 {
@@ -17,13 +17,9 @@ my $dtd;
     $dtd = <$fh>;
     close $fh;
 }
-
-my ($entities, $dtdString) = get_pentities($dtd);
-
 my $json = JSON->new->allow_nonref;
-print "pentities:\n---------------------------\n" . $json->pretty->encode($entities) . "\n";
+my $out = SNAC::DTD::parse_dtd($dtd);
 
-my ($noEntitiesArray, $entitiesArray) = evaluate_pentities($entities, $noEntitiesArray, $entitiesArray);
+#print($json->pretty->encode($out)) . "\n";
 
-my $dtd_out = parse($dtd);
-print "$dtd\n---------------------------------\n$dtd_out\n";
+

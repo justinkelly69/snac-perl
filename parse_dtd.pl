@@ -131,7 +131,7 @@ $myDtd = removeComments($myDtd);
 #print "$dtdString\n";
 
 $json = JSON->new->allow_nonref;
-print "pentities: " . $json->pretty->encode($pEntities) . "\n";
+#print "pentities: " . $json->pretty->encode($pEntities) . "\n";
 
 my $dtd = parseDTD( $myDtd, \%out, 1);
-print "DTD: " . $json->pretty->encode(\%out) . "\n";
+#print "DTD: " . $json->pretty->encode(\%out) . "\n";
