@@ -144,9 +144,6 @@ sub evaluate_pentities {
         $new_size = keys(%entities_array);
     }
 
-    #print("final no_entities_array: " . $json->pretty->encode($no_entities_array) . "\n");
-    #print("final entities_array: "   . $json->pretty->encode(\%entities_array)   . "\n");
-
     return ($no_entities_array, $entities_array);
 }
 

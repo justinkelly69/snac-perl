@@ -15,39 +15,31 @@ our $name_pattern = '[.A-Za-z0-9_-]+';
 #          SYSTEM "http://www.turing.org.uk/turing/pi1/bus.jpg"
 #          NDATA jpeg>
 sub parse {
-    my ( $entity_string, $entities ) = @_;
-    my ( $entity_name, $entity_value );
+    my ($entity_string) = @_;
+    my ($out);
 
-    if ( $entity_string =~ /^\s*($name_pattern)\s+(.*)/s ) {
-        $entity_name   = $1;
-        $entity_string = $2;
+    if ( $entity_string =~ /^\s*(["'])(.*)/s ) {
+        my ($entity_value);
+        ( $entity_value, $entity_string ) = get_string( $2, $1 );
+        $out = { name => $entity_value };
 
-        if ( $entity_string =~ /^\s*(["'])(.*)/s ) {
-            ( $entity_value, $entity_string ) = get_string( $2, $1 );
-            $$entities{$entity_name} = $entity_value;
-        }
+        if ( $entity_string =~ /^\s*SYSTEM\s*(["'])(.*)/s ) {
+            my ($entity_system);
+            ( $entity_system, $entity_string ) = get_string( $2, $1 );
+            $out->{system} = $entity_system;
 
-        elsif ( $entity_string =~ /^\s*SYSTEM\s*(["'])(.*)/s ) {
-            ( $entity_value, $entity_string ) = get_string( $2, $1 );
-            $$entities{$entity_name}{'SYSTEM'} = $entity_value;
-
-            if ( $entity_string =~ /^\s*NDATA\s*($name_pattern)\s*(.*)/s ) {
-                $entity_value                     = $1;
-                $entity_string                    = $2;
-                $$entities{$entity_name}{'NDATA'} = $entity_value;
+            if ( $entity_string =~ /^\s*NDATA\s*($name_pattern)\s*/s ) {
+                my $entity_ndata = $1;
+                $out->{ndata} = $entity_ndata;
             }
-        }
-
-        else {
-            die("no entity $entity_name, $entity_string\n");
-        }
-
-        if ( $entity_string =~ /^\s*>(.*)/s ) {
-            $entity_string = $1;
-            return ( $entity_string, $entities );
         }
     }
     else {
-        die "not an entity $1\n";
+        die("no entity $entity_string\n");
     }
+
+    return $out;
 }
+
+1;
+

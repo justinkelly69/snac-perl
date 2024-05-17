@@ -20,6 +20,6 @@ my $dtd;
 my $json = JSON->new->allow_nonref;
 my $out = SNAC::DTD::parse_dtd($dtd);
 
-#print($json->pretty->encode($out)) . "\n";
+print($json->pretty->encode($out));
 
 

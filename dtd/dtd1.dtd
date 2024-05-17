@@ -41,16 +41,27 @@
                     href CDATA   #IMPLIED>                    
 
 <!ENTITY stooges "larry|curly|moe">
+<!ENTITY father "Homer J. Simpson"
+     SYSTEM "http://www.turing.org.uk/turing/pi1/bus.jpg"
+     NDATA jpeg>
+<!ENTITY mother "Marge B. Simpson"
+     SYSTEM "http://www.simpsons.com/marge.gif"
+     NDATA gif>
+<!ENTITY son "Bartholomew J. Simpson">
+<!ENTITY daughter "Lisa Simpson">
+<!ENTITY baby "Maggie Simpson">
 
 <!ELEMENT profession (#PCDATA)>
 <!ELEMENT footnote   (#PCDATA)>
 
 <!ATTLIST footnote source CDATA #REQUIRED>
 
+<!ELEMENT nonsense ANY>
+
 <!ELEMENT first_name (#PCDATA)>
 <!ELEMENT last_name  (#PCDATA)>
 
-<![%v1;[
+<![%v2;[
      <!ATTLIST first_name text CDATA #FIXED "Fred">
      <!ATTLIST last_name text CDATA #FIXED "Flintstone">
 ]]>
@@ -72,7 +83,7 @@
      <!ATTLIST first_name text CDATA #FIXED "Fred">
      <!ATTLIST last_name text CDATA #FIXED "Flintstone">
 ]]>
-<![%v2;[
+<![%v1;[
      <!ATTLIST first_name text CDATA #FIXED "Homer">
      <!ATTLIST last_name text CDATA #FIXED "Simpson">
 ]]>

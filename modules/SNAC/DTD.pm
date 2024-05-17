@@ -11,6 +11,7 @@ use SNAC::DTD::Attributes;
 use SNAC::DTD::Comments;
 use SNAC::DTD::Elements;
 use SNAC::DTD::Entities;
+use SNAC::DTD::IncludeIgnore;
 use SNAC::DTD::Notations;
 use SNAC::DTD::PEntities;
 use SNAC::XML::Text;
@@ -31,39 +32,44 @@ sub parse_dtd {
 
     my $json = JSON->new->allow_nonref;
 
-    my $dtd_string = SNAC::DTD::PEntities::parse($dtd);
-    $dtd_string = SNAC::DTD::Comments::parse($dtd_string);
-
-    #print("dtd_string [[[$dtd_string]]]\n");
+    my $dtd_string = SNAC::DTD::Comments::parse($dtd);
+    $dtd_string = SNAC::DTD::PEntities::parse($dtd_string);
+    $dtd_string = SNAC::DTD::IncludeIgnore::parse($dtd_string);
 
     while ( trim($dtd_string) ne '' ) {
 
-        if ( $dtd_string =~ /^\s*<!ELEMENT\s+(.*)/s ) {
-
-            #print("\$1: $1\n");
-            ( $dtd_string, $elements ) =
-              SNAC::DTD::Elements::parse( $1, $elements );
+        if ( $dtd_string =~ /^\s*<!ELEMENT\s+($name_pattern)\s+([^>]+)>(.*)/s )
+        {
+            $elements->{$1} = SNAC::DTD::Elements::parse($2);
+            $dtd_string = $3;
         }
 
-        elsif ( $dtd_string =~ /^\s*<!ATTLIST\s+(.*)/s ) {
-            ( $dtd_string, $attributes ) =
-              SNAC::DTD::Attributes::parse( $1, $attributes );
+        elsif (
+            $dtd_string =~ /^\s*<!ATTLIST\s+($name_pattern)\s+([^>]+)>(.*)/s )
+        {
+            $attributes->{$1} = SNAC::DTD::Attributes::parse($2);
+            $dtd_string = $3;
         }
 
-        elsif ( $dtd_string =~ /^\s*<!ENTITY\s+(.*)/s ) {
-            ( $dtd_string, $entities ) =
-              SNAC::DTD::Entities::parse( $1, $entities );
+        elsif (
+            $dtd_string =~ /^\s*<!ENTITY\s+($name_pattern)\s+([^>]+)>(.*)/s )
+        {
+            $entities->{$1} = SNAC::DTD::Entities::parse($2);
+            $dtd_string = $3;
         }
 
-        elsif ( $dtd_string =~ /^\s*<!NOTATION\s+(.*)/s ) {
-            ( $dtd_string, $notations ) =
-              SNAC::DTD::Notations::parse( $1, $notations );
+        elsif (
+            $dtd_string =~ /^\s*<!NOTATION\s+($name_pattern)\s+([^>]+)>(.*)/s )
+        {
+            $notations->{$1} = SNAC::DTD::Notations::parse($2);
+            $dtd_string = $3;
         }
 
         else {
-            last;
+            print("can't find anything\n");
         }
     }
+
 
     return {
         elements   => $elements,

@@ -7,141 +7,120 @@ use Data::Dumper;
 use JSON;
 use String::Util qw(trim);
 
-use SNAC::XML::Text;
+use SNAC::XML::Text qw/get_string/;
 
 use base 'Exporter';
 
 our $VERSION      = '1.0';
 our $name_pattern = '[.A-Za-z0-9_-]+';
-our $attribute_types =
-  'ID|IDREF|IDREFS|NMTOKEN|NMTOKENS|ENTITY|ENTITIES|NOTATION';
+our $att_types    = 'ID|IDREF|IDREFS|NMTOKEN|NMTOKENS|ENTITY|ENTITIES|NOTATION';
 
 sub parse {
-    my ( $attribute_list, $attributes ) = @_;
-    my ( $name, %attributes );
+    my ($att_list) = @_;
+    my ( $name, $attributes );
 
-    if ( $attribute_list =~ /^\s*($name_pattern)\s+(.*)/s ) {
-        $name           = $1;
-        $attribute_list = $2;
+    while (trim($att_list)) {
 
-        while ($attribute_list) {
+        if ( $att_list =~ /^\s*($name_pattern)\s*NOTATION\s+\(\s*(.*)/s ) {
+            my $att_name = $1;
+            my ( $enums, $default_value );
+            ( $enums, $default_value, $att_list ) = enum_choice($2);
+            $attributes->{$att_name} = [ 'NOTATION', $enums, $default_value ];
+        }
 
-            if ( $attribute_list =~
-                /^\s*($name_pattern)\s+NOTATION\s+\(\s*(.*)/s )
-            {
+        elsif ( $att_list =~ /^\s*($name_pattern)\s*CDATA\s+(.*)/s ) {
+            $att_list = $2;
+            my $att_name = $1;
 
-                my $attribute_name = $1;
-                my ( $enums, $default_value );
-                ( $enums, $default_value, $attribute_list ) = enum_choice($2);
-                $attributes{$name}{$attribute_name} =
-                  [ 'NOTATION', $enums, $default_value ];
-
+            if ( $att_list =~ /^\s*(['"])(.*)/s ) {
+                my ( $default_value );
+                ( $default_value, $att_list ) = get_string( $2, $1 );
+                $attributes->{$att_name} =
+                  [ 'CDATA', 'DEFAULT', $default_value ];
             }
-            elsif ( $attribute_list =~ /^\s*($name_pattern)\s+CDATA\s+(.*)/s ) {
-                my $attribute_name = $1;
-                $attribute_list = $2;
 
-                if ( $attribute_list =~ /^\s*(['"])(.*)/s ) {
-                    my $default_value;
-                    ( $default_value, $attribute_list ) =
-                      SNAC::XML::Text::get_string( $2, $1 );
-                    $attributes{$name}{$attribute_name} =
-                      [ 'CDATA', 'DEFAULT', $default_value ];
-
-                }
-                elsif ( $attribute_list =~ /^\s*#FIXED\s*(['"])(.*)/s ) {
-                    my $fixedValue;
-                    ( $fixedValue, $attribute_list ) =
-                      SNAC::XML::Text::get_string( $2, $1 );
-                    $attributes{$name}{$attribute_name} =
-                      [ 'CDATA', 'FIXED', $fixedValue ];
-
-                }
-                elsif ( $attribute_list =~ /^s*#REQUIRED\s*(.*)/s ) {
-                    $attribute_list = $1;
-                    $attributes{$name}{$attribute_name} =
-                      [ 'CDATA', 'REQUIRED' ];
-
-                }
-                elsif ( $attribute_list =~ /^s*#IMPLIED\s*(.*)/s ) {
-                    $attribute_list = $1;
-                    $attributes{$name}{$attribute_name} =
-                      [ 'CDATA', 'IMPLIED' ];
-
-                }
-                elsif ( $attribute_list =~ /^\s*(.*)/s ) {
-                    $attribute_list = $1;
-                    $attributes{$name}{$attribute_name} =
-                      [ 'CDATA', 'IMPLIED' ];
-                }
-
+            elsif ( $att_list =~ /^\s*#FIXED\s*(['"])(.*)/s ) {
+                my ( $fixed_value );
+                ( $fixed_value, $att_list ) = get_string( $2, $1 );
+                $attributes->{$att_name} = [ 'CDATA', 'FIXED', $fixed_value ];
             }
-            elsif ( $attribute_list =~
-                /^\s*($name_pattern)\s+($attribute_types)\s+(.*)/s )
-            {
-                my $attribute_name = $1;
-                my $attribute_type = $2;
-                $attribute_list = $3;
 
-                if ( $attribute_list =~ /^\s*#REQUIRED\s*(.*)/s ) {
-                    $attribute_list = $1;
-                    $attributes{$name}{$attribute_name} =
-                      [ $attribute_type, 'REQUIRED' ];
-
-                }
-                elsif ( $attribute_list =~ /^\s*#IMPLIED\s*(.*)/s ) {
-                    $attribute_list = $1;
-                    $attributes{$name}{$attribute_name} =
-                      [ $attribute_type, 'IMPLIED' ];
-                }
-
+            elsif ( $att_list =~ /^s*#REQUIRED\s*(.*)/s ) {
+                $att_list = $1;
+                $attributes->{$att_name} = [ 'CDATA', 'REQUIRED' ];
             }
-            elsif ( $attribute_list =~ /^\s*($name_pattern)\s*\(\s*(.*)/s ) {
-                my $attribute_name = $1;
-                my ( $enums, $default_value );
-                ( $enums, $default_value, $attribute_list ) = enum_choice($2);
-                $attributes{$name}{$attribute_name} =
-                  [ 'ENUMERATED', $enums, $default_value ];
 
+            elsif ( $att_list =~ /^s*#IMPLIED\s*(.*)/s ) {
+                $att_list = $1;
+                $attributes->{$att_name} = [ 'CDATA', 'IMPLIED' ];
             }
-            elsif ( $attribute_list =~ /^\s*>(.*)/s ) {
-                $attribute_list = $1;
-                return ( $attribute_list, $attributes );
 
-            }
-            else {
-                die("Invalid Syntax: '$attribute_list'\n");
+            elsif ( $att_list =~ /^\s*(.*)/s ) {
+                $att_list = $1;
+                $attributes->{$att_name} = [ 'CDATA', 'IMPLIED' ];
             }
         }
+
+        elsif ( $att_list =~ /^\s*($name_pattern)\s*($att_types)\s+(.*)/s ) {
+            $att_list = $3;
+
+            my $att_name  = $1;
+            my $att_types = $2;
+
+            if ( $att_list =~ /^\s*#REQUIRED\s*(.*)/s ) {
+                $att_list = $1;
+                $attributes->{$att_name} = [ $att_types, 'REQUIRED' ];
+            }
+
+            elsif ( $att_list =~ /^\s*#IMPLIED\s*(.*)/s ) {
+                $att_list = $1;
+                $attributes->{$att_name} = [ $att_types, 'IMPLIED' ];
+            }
+        }
+
+        elsif ( $att_list =~ /^\s*($name_pattern)\s*\(\s*(.*)/s ) {
+            my $att_name  = $1;
+            my ( $enums, $default_value );
+            ( $enums, $default_value, $att_list ) = enum_choice($2);
+            $attributes->{$att_name} = [ 'ENUMERATED', $enums, $default_value ];
+        }
+
+        else {
+            print("Invalid Attribute Syntax '$att_list'\n");
+        }
+
     }
+    return $attributes;
 }
 
 sub enum_choice {
-    my ($str) = @_;
+    my ($enum_string) = @_;
     my ( @enums, $default_value );
 
-    while ( $str =~ /^\s*($name_pattern)\s*\|(.*)/s ) {
+    while ( $enum_string =~ /^\s*($name_pattern)\s*\|(.*)/s ) {
         push( @enums, $1 );
-        $str = $2;
+        $enum_string = $2;
     }
 
-    if ( $str =~ /^\s*($name_pattern)\s*\)(.*)/s ) {
+    if ( $enum_string =~ /^\s*($name_pattern)\s*\)(.*)/s ) {
         push( @enums, $1 );
-        $str = $2;
+        $enum_string = $2;
     }
     else {
-        die("Not an Enumerated String '$1'\n");
+        die("Not an Enumerated String '$enum_string'\n");
     }
 
-    if ( $str =~ /^\s*(["'])(.*)/s ) {
-        ( $default_value, $str ) = SNAC::XML::Text::get_string( $2, $1 );
+    if ( $enum_string =~ /^\s*(["'])(.*)/s ) {
+        ( $default_value, $enum_string ) = SNAC::XML::Text::get_string( $2, $1 );
     }
-    elsif ( $str =~ /^\s*#(IMPLIED|REQUIRED)\s*(.*)/s ) {
-        ( $default_value, $str ) = ( $1, $2 );
+    elsif ( $enum_string =~ /^\s*#(IMPLIED|REQUIRED)\s*(.*)/s ) {
+        ( $default_value, $enum_string ) = ( $1, $2 );
     }
     else {
-        die("No Default Value ['$default_value'] ['$str']\n");
+        die("No Default Value ['$default_value'] ['$enum_string']\n");
     }
 
-    return ( \@enums, $default_value, $str );
+    return ( \@enums, $default_value, $enum_string );
 }
+
+1;
