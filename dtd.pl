@@ -17,9 +17,9 @@ my $dtd;
     $dtd = <$fh>;
     close $fh;
 }
-my $json = JSON->new->allow_nonref;
-my $out = SNAC::DTD::parse_dtd($dtd);
+my $json     = JSON->new->allow_nonref;
+my $elements = Elements;
+my $out      = SNAC::DTD::parse_dtd($dtd);
 
-print($json->pretty->encode($out));
-
+print( $json->pretty->encode($out) );
 

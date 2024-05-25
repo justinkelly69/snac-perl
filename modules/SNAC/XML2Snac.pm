@@ -1,13 +1,23 @@
+package SNAC::XML2Snac;
+
+use strict;
+use warnings;
+
+use Data::Dumper;
+use JSON;
+use String::Util qw(trim);
+
+our @stack;
+
 sub xml2snac {
     my ( $xml, $stack ) = @_;
-    local @stack;
+    local(@stack);
     return encode_json( _xml2snac($xml)->{out} );
 }
 
 sub _xml2snac {
     my ($xml) = @_;
-    my( @out);
-    #local @stack;
+    my @out;
 
     while ($xml) {
 

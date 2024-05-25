@@ -19,7 +19,7 @@ sub parse {
     my ($att_list) = @_;
     my ( $name, $attributes );
 
-    while (trim($att_list)) {
+    while ( trim($att_list) ) {
 
         if ( $att_list =~ /^\s*($name_pattern)\s*NOTATION\s+\(\s*(.*)/s ) {
             my $att_name = $1;
@@ -33,14 +33,14 @@ sub parse {
             my $att_name = $1;
 
             if ( $att_list =~ /^\s*(['"])(.*)/s ) {
-                my ( $default_value );
+                my ($default_value);
                 ( $default_value, $att_list ) = get_string( $2, $1 );
                 $attributes->{$att_name} =
                   [ 'CDATA', 'DEFAULT', $default_value ];
             }
 
             elsif ( $att_list =~ /^\s*#FIXED\s*(['"])(.*)/s ) {
-                my ( $fixed_value );
+                my ($fixed_value);
                 ( $fixed_value, $att_list ) = get_string( $2, $1 );
                 $attributes->{$att_name} = [ 'CDATA', 'FIXED', $fixed_value ];
             }
@@ -79,7 +79,7 @@ sub parse {
         }
 
         elsif ( $att_list =~ /^\s*($name_pattern)\s*\(\s*(.*)/s ) {
-            my $att_name  = $1;
+            my $att_name = $1;
             my ( $enums, $default_value );
             ( $enums, $default_value, $att_list ) = enum_choice($2);
             $attributes->{$att_name} = [ 'ENUMERATED', $enums, $default_value ];
@@ -111,7 +111,8 @@ sub enum_choice {
     }
 
     if ( $enum_string =~ /^\s*(["'])(.*)/s ) {
-        ( $default_value, $enum_string ) = SNAC::XML::Text::get_string( $2, $1 );
+        ( $default_value, $enum_string ) =
+          SNAC::XML::Text::get_string( $2, $1 );
     }
     elsif ( $enum_string =~ /^\s*#(IMPLIED|REQUIRED)\s*(.*)/s ) {
         ( $default_value, $enum_string ) = ( $1, $2 );

@@ -1,3 +1,8 @@
+use strict;
+use warnings;
+
+my $name_pattern = '[.A-Za-z0-9_-]+';
+
 # comment
 sub escapeHtml {
     my ($value) = @_;
@@ -25,63 +30,57 @@ sub unEscapeHtml {
 
 sub escapeCDATA {
     my ($value) = @_;
-
     $value =~ s!]]>!]]&gt;!g;
-
     return $value;
 }
 
 sub escapeComment {
     my ($value) = @_;
-
     $value =~ s!--! - - !g;
-
     return $value;
 }
 
 sub escapePILang {
     my ($value) = @_;
-
     if ( $value !~ m![a-z]+[0-9]?=?! ) {
         return '';
     }
-
     return $value;
 }
 
 sub escapePIBody {
     my ($value) = @_;
-
     $value =~ s!\?>!?&gt;!g;
-
     return $value;
 }
 
-sub trim {
-    my $s = shift;
-    $s =~ s/^\s+|\s+$//g;
-    return $s;
-}
+# sub trim {
+#     my $s = shift;
+#     $s =~ s/^\s+|\s+$//g;
+#     return $s;
+# }
 
 sub getString {
     my ( $string, $quoteChar ) = @_;
+    my ($value);
 
     for my $i ( 0 .. length($string) - 1 ) {
-        if (   substr( $string, $i, 1 ) =~ m!^$quoteChar$! # character is " or '
-            && substr( $string, $i - 1, 1 ) !~ m!^\\$! )   # preceding character is not \
-        {
+
+        if (substr( $string, $i, 1 ) =~ m!^$quoteChar$! # character is " or '
+            && substr( $string, $i - 1, 1 ) !~ m!^\\$! ){   # preceding character is not \
+
             $value = substr( $string, 0, $i );
             $value =~ s!\\$quoteChar!$quoteChar!g; # \' to ' \" to "
             $value  = unEscapeHtml($value);
             $string = substr( $string, $i + 1 );
+            
             return ( $value, $string );
         }
     }
-
     die "BAD STRING '$string'\n";
 }
 
-sub normalizeString {
+sub normalize_string {
     my( $string ) = @_;
 
     my @lines = split(/\s+/, $string);

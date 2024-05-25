@@ -7,13 +7,13 @@ use Data::Dumper;
 use JSON;
 use String::Util qw(trim);
 
-use SNAC::DTD::Attributes;
-use SNAC::DTD::Comments;
-use SNAC::DTD::Elements;
-use SNAC::DTD::Entities;
-use SNAC::DTD::IncludeIgnore;
-use SNAC::DTD::Notations;
-use SNAC::DTD::PEntities;
+use DTD::Attributes;
+use DTD::Comments;
+use DTD::Elements;
+use DTD::Entities;
+use DTD::IncludeIgnore;
+use DTD::Notations;
+use DTD::PEntities;
 use SNAC::XML::Text;
 
 use base 'Exporter';
@@ -35,6 +35,8 @@ sub parse_dtd {
     my $dtd_string = SNAC::DTD::Comments::parse($dtd);
     $dtd_string = SNAC::DTD::PEntities::parse($dtd_string);
     $dtd_string = SNAC::DTD::IncludeIgnore::parse($dtd_string);
+
+    
 
     while ( trim($dtd_string) ne '' ) {
 

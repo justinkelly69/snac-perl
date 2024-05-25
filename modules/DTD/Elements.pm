@@ -55,12 +55,21 @@ sub element_children {
         elsif ( $children_string =~ /^\s*\)([?*+]?)\s*(.*)$/s ) {
             ( $min, $max ) = min_max($1);
 
-            return {
-                type => $type,
-                kids => \@kids,
-                min  => $min,
-                max  => $max
-            };
+            if ( $type eq 'T' ) {
+                return { type => 'T' };
+                    
+
+            }
+            else {
+                return 
+                {
+                    type => $type,
+                    kids => \@kids,
+                    min  => $min,
+                    max  => $max
+                };
+            }
+
         }
 
         # #PCDATA
