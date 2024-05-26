@@ -4,13 +4,15 @@ sub rewrite {
     my ($input) = @_;
 
     $input =~ s/#x([0-9A-F]+)/\\N{U+\1}/g;
-    #$input =~ s/ \[/[/g;
-    #$input =~ s/\] /]/g;
+    #$input =~ s/\s+\[/[/g;
+    #$input =~ s/\]\s+/]/g;
+
+    $input =~ s/\s+//g;
 
     print $input . "\n";
 }
 
-my $str ="my \$BaseChar =
+my $str = "my \$BaseChar =
  '[#x0041-#x005A] | [#x0061-#x007A] | [#x00C0-#x00D6] | [#x00D8-#x00F6] |'
 .' [#x00F8-#x00FF] | [#x0100-#x0131] | [#x0134-#x013E] | [#x0141-#x0148] |'
 .' [#x014A-#x017E] | [#x0180-#x01C3] | [#x01CD-#x01F0] | [#x01F4-#x01F5] |'

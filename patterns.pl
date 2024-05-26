@@ -7,25 +7,24 @@ use String::Util  qw(trim);
 require "./text.pl";
 
 my $Char =
-    '\N{U+9}|\N{U+A}|\N{U+D}|[\N{U+20}-\N{U+D7FF}]|'
-  . '[\N{U+E000}-\N{U+FFFD}]|[\N{U+10000}-\N{U+10FFFF}]';
+    '\N{U+0009}|\N{U+000A}|\N{U+000D}|'
+  . '[\N{U+0020}-\N{U+D7FF}]|[\N{U+E000}-\N{U+FFFD}]|'
+  . '[\N{U+10000}-\N{U+10FFFF}]';
 
-my $S = '(\N{U+9}|\N{U+A}|\N{U+D}|\N{U+20})+';
+my $S = '(\N{U+0009}|\N{U+000A}|\N{U+000D}|\N{U+0020})+';
 
 my $NameStartChar =
     '([:A-Za-z_]|'
-  . '[\N{U+C0}-\N{U+D6}]|[\N{U+D8}-\N{U+F6}]|'
-  . '[\N{U+F8}-\N{U+2FF}]|[\N{U+370}-\N{U+37D}]|'
-  . '[\N{U+37F}-\N{U+1FFF}]|[\N{U+200C}-\N{U+200D}]|'
+  . '[\N{U+00C0}-\N{U+00D6}]|[\N{U+00D8}-\N{U+00F6}]|'
+  . '[\N{U+00F8}-\N{U+02FF}]|[\N{U+0370}-\N{U+037D}]|'
+  . '[\N{U+037F}-\N{U+1FFF}]|[\N{U+200C}-\N{U+200D}]|'
   . '[\N{U+2070}-\N{U+218F}]|[\N{U+2C00}-\N{U+2FEF}]|'
   . '[\N{U+3001}-\N{U+D7FF}]|[\N{U+F900}-\N{U+FDCF}]|'
   . '[\N{U+FDF0}-\N{U+FFFD}]|[\N{U+10000}-\N{U+EFFFF}])';
 
 my $NameChar =
-    "($NameStartChar|"
-  . '[-.0-9\N{U+B7}]|'
-  . '[\N{U+0300}-\N{U+036F}]|'
-  . '[\N{U+203F}-\N{U+2040}])';
+    "($NameStartChar|[-.0-9\N{U+00B7}]|"
+  . '[\N{U+0300}-\N{U+036F}]|[\N{U+203F}-\N{U+2040}])';
 
 my $CharRef     = '(&#[0-9]+;|&#x[0-9a-fA-F]+;)';    # &#20; &#x3E;
 my $Name        = "${NameStartChar}${NameChar}*";    # name123
