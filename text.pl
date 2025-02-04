@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-my $name_pattern = '[.A-Za-z0-9_-]+';
+sub name_pattern { '[.A-Za-z0-9_-]+' }
 
 # comment
 sub escapeHtml {

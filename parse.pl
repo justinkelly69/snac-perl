@@ -8,11 +8,11 @@ require "./text.pl";
 require "./snac2xml.pl";
 require "./xml2snac.pl";
 
-$input = "xml/waffle.xml";
-$jsonOut = "out/snac.json";
-$xmlOut = "out/snac.xml";
+my $input = "xml/waffle.xml";
+my $jsonOut = "out/snac.json";
+my $xmlOut = "out/snac.xml";
 
-$options = {
+my $options = {
 	USE_CDATA => 1,
 	SHOW_COMMENTS => 1,
 	SHOW_PI => 1,
@@ -45,7 +45,7 @@ close $jsonFh;
 
 #print("$json\n");
 
-my $xml = snac2xml($json, $options);
+my $xml1 = snac2xml($json, $options);
 open my $xmlFh, '>', $xmlOut;
-print $xmlFh $xml;
+print $xmlFh $xml1;
 close $xmlFh;

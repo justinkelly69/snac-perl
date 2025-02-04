@@ -2,7 +2,9 @@ use Data::Dumper;
 use JSON;
 use String::Util qw(trim);
 
-require "./text.pl";
+require "../text.pl";
+
+my $name_pattern = name_pattern();
 
 sub getEntities {
     my ($dtdString) = @_;
@@ -23,7 +25,7 @@ sub getEntities {
 # <!ENTITY % names SYSTEM "names.dtd">
 sub parsePEntity {
     my ( $entityStr, $entities ) = @_;
-    my $entityName, $entityValue;
+    my ($entityName, $entityValue);
 
     if ( $entityStr =~ /^\s*($name_pattern)\s+(.*)/s ) {
         $entityName = $1;

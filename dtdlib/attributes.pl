@@ -2,11 +2,13 @@ use Data::Dumper;
 use JSON;
 use String::Util qw(trim);
 
-require "./text.pl";
+require "../text.pl";
+
+my $name_pattern = name_pattern();
 
 sub parseAttList {
     my ( $attList, $attributes ) = @_;
-    my $name;
+    my ($name, %attributes);
 
     if ( $attList =~ /^\s*($name_pattern)\s+(.*)/s ) {
         $name    = $1;
@@ -17,10 +19,9 @@ sub parseAttList {
             if ( $attList =~ /^\s*($name_pattern)\s+NOTATION\s+\(\s*(.*)/s ) {
 
                 my $attName = $1;
-                my $enums, $defaultValue;
+                my ($enums, $defaultValue);
                 ( $enums, $defaultValue, $attList ) = enumChoice($2);
-                $attributes{$name}{$attName} =
-                  [ 'NOTATION', $enums, $defaultValue ];
+                $attributes{$name}{$attName} = [ 'NOTATION', $enums, $defaultValue ];
             }
 
             elsif ( $attList =~ /^\s*($name_pattern)\s+CDATA\s+(.*)/s ) {
@@ -75,10 +76,9 @@ sub parseAttList {
 
             elsif ( $attList =~ /^\s*($name_pattern)\s*\(\s*(.*)/s ) {
                 my $attName = $1;
-                my $enums, $defaultValue;
+                my ($enums, $defaultValue);
                 ( $enums, $defaultValue, $attList ) = enumChoice($2);
-                $attributes{$name}{$attName} =
-                  [ 'ENUMERATED', $enums, $defaultValue ];
+                $attributes{$name}{$attName} = [ 'ENUMERATED', $enums, $defaultValue ];
             }
 
             elsif ( $attList =~ /^\s*>(.*)/s ) {
@@ -95,7 +95,7 @@ sub parseAttList {
 
 sub enumChoice {
     my ($str) = @_;
-    my @enums, $defaultValue;
+    my (@enums, $defaultValue);
 
     while ( $str =~ /^\s*($name_pattern)\s*\|(.*)/s ) {
         push( @enums, $1 );

@@ -9,7 +9,7 @@ require "./text.pl";
 sub read_children {
     my ($dtdString) = @_;
 
-    my @particles, $type, $name;
+    my (@particles, $type, $name);
     my $atom_type = 'X';
     my $atom_quantifier;
 

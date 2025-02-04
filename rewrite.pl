@@ -3,11 +3,13 @@
 sub rewrite {
     my ($input) = @_;
 
-    $input =~ s/#x([0-9A-F]+)/\\N{U+\1}/g;
+    $input =~ s/#x([0-9A-F]+)/\\N{U+$1}/g;
     #$input =~ s/\s+\[/[/g;
     #$input =~ s/\]\s+/]/g;
 
     $input =~ s/\s+//g;
+    $input =~ s/\|/\n|/g;
+    $input =~ s/'\.'//g;
 
     print $input . "\n";
 }

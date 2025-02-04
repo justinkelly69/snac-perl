@@ -1,5 +1,9 @@
 package SNAC::DTD::Attributes;
 
+BEGIN {
+    push (@INC, '..');
+}
+
 use strict;
 use warnings;
 
@@ -35,8 +39,7 @@ sub parse {
             if ( $att_list =~ /^\s*(['"])(.*)/s ) {
                 my ($default_value);
                 ( $default_value, $att_list ) = get_string( $2, $1 );
-                $attributes->{$att_name} =
-                  [ 'CDATA', 'DEFAULT', $default_value ];
+                $attributes->{$att_name} = [ 'CDATA', 'DEFAULT', $default_value ];
             }
 
             elsif ( $att_list =~ /^\s*#FIXED\s*(['"])(.*)/s ) {
@@ -45,12 +48,12 @@ sub parse {
                 $attributes->{$att_name} = [ 'CDATA', 'FIXED', $fixed_value ];
             }
 
-            elsif ( $att_list =~ /^s*#REQUIRED\s*(.*)/s ) {
+            elsif ( $att_list =~ /^\s*#REQUIRED\s*(.*)/s ) {
                 $att_list = $1;
                 $attributes->{$att_name} = [ 'CDATA', 'REQUIRED' ];
             }
 
-            elsif ( $att_list =~ /^s*#IMPLIED\s*(.*)/s ) {
+            elsif ( $att_list =~ /^\s*#IMPLIED\s*(.*)/s ) {
                 $att_list = $1;
                 $attributes->{$att_name} = [ 'CDATA', 'IMPLIED' ];
             }

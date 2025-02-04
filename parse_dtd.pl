@@ -1,9 +1,15 @@
 #!/home/jk/opt/perl/bin/perl
 
+BEGIN {
+     push @INC, './modules'
+}
+
 use JSON;
 use Data::Dumper;
 
-require "./dtd.pl";
+print "@INC\n";
+
+require "./dtd3.pl";
 
 my $dtdString = <<EOF;
 <!ENTITY % coreattrs 
@@ -126,12 +132,12 @@ EOF
 my $myDtd = $dtdString;
 my %out;
 
-my ( $pEntities, $myDtd ) = getEntities($myDtd);
+my ($pEntities) = getEntities($myDtd);
 $myDtd = removeComments($myDtd);
-#print "$dtdString\n";
+print "$dtdString\n";
 
-$json = JSON->new->allow_nonref;
-#print "pentities: " . $json->pretty->encode($pEntities) . "\n";
+my $json = JSON->new->allow_nonref;
+print "pentities: " . $json->pretty->encode($pEntities) . "\n";
 
 my $dtd = parseDTD( $myDtd, \%out, 1);
-#print "DTD: " . $json->pretty->encode(\%out) . "\n";
+print "DTD: " . $json->pretty->encode(\%out) . "\n";

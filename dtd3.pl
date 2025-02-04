@@ -4,8 +4,8 @@ use String::Util qw(trim);
 
 require "./text.pl";
 
-$name_pattern = '[A-Za-z0-9_-]+';
-$ATT_TYPES    = 'ID|IDREF|IDREFS|NMTOKEN|NMTOKENS|ENTITY|ENTITIES|NOTATION';
+my $name_pattern = '[A-Za-z0-9_-]+';
+my $ATT_TYPES    = 'ID|IDREF|IDREFS|NMTOKEN|NMTOKENS|ENTITY|ENTITIES|NOTATION';
 
 sub getEntities {
     my ($dtdString) = @_;
@@ -215,7 +215,9 @@ sub elementChildren {
 
 sub quantify {
     my ($quantifier) = @_;
-    my $min = 1, $max = 1;
+    my ($min, $max);
+
+    $min = 1, $max = 1;
 
     if ( $quantifier eq '?' ) {
         $min = 0;
@@ -242,7 +244,7 @@ sub parseAttList {
 
             if ( $attList =~ /^\s*($name_pattern)\s+NOTATION\s+\(\s*(.*)/s ) {
                 my $attName = $1;
-                my $enums, $defaultValue;
+                my( $enums, $defaultValue);
                 ( $enums, $defaultValue, $attList ) = enumChoice($2);
                 $$attributes{$name}{$attName} =
                   [ 'NOTATION', $enums, $defaultValue ]
@@ -307,7 +309,7 @@ sub parseAttList {
 
             elsif ( $attList =~ /^\s*($name_pattern)\s*\(\s*(.*)/s ) {
                 my $attName = $1;
-                my $enums, $defaultValue;
+                my ($enums, $defaultValue);
                 ( $enums, $defaultValue, $attList ) =
                   enumChoice( $2, $include );
                 $$attributes{$name}{$attName} =
@@ -330,7 +332,7 @@ sub parseAttList {
 
 sub enumChoice {
     my ( $str, $include ) = @_;
-    my @enums, $defaultValue;
+    my (@enums, $defaultValue);
 
     while ( $str =~ /^\s*($name_pattern)\s*\|(.*)/s ) {
         push( @enums, $1 ) if ($include);
@@ -361,7 +363,7 @@ sub enumChoice {
 # <!NOTATION gif  SYSTEM "image/gif">
 sub parseNotation {
     my ( $notationStr, $notations, $include ) = @_;
-    my $name, $public, $system;
+    my ($name, $public, $system);
 
     if ( $notationStr =~ /^\s*($name_pattern)\s+(.*)/s ) {
         $name        = $1;    # gif
@@ -410,7 +412,7 @@ sub parseNotation {
 #          NDATA jpeg>
 sub parseEntity {
     my ( $entityStr, $entities ) = @_;
-    my $entityName, $entityValue;
+    my ($entityName, $entityValue);
 
     if ( $entityStr =~ /^\s*($name_pattern)\s+(.*)/s ) {
         $entityName = $1;
@@ -450,7 +452,7 @@ sub parseEntity {
 # <!ENTITY % names SYSTEM "names.dtd">
 sub parsePEntity {
     my ( $entityStr, $entities ) = @_;
-    my $entityName, $entityValue;
+    my ($entityName, $entityValue);
 
     if ( $entityStr =~ /^\s*($name_pattern)\s+(.*)/s ) {
         $entityName = $1;

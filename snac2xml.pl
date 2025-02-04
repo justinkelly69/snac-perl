@@ -29,13 +29,13 @@ sub _snac2xml {
             else {
                 $tagName = "$ns:$name";
             }
-            $out .= prefix($prefix) . "<${tagName}${attributes}";
+            $out .= prefix($prefix, $options) . "<${tagName}${attributes}";
 
             if ( @$children > 0 ) {
                 $out .= ">"
                   . _snac2xml( $children, "${prefix}${prefixChar}",
                     $prefixChar, $attPrefix, $options )
-                  . prefix($prefix)
+                  . prefix($prefix, $options)
                   . "</$tagName>";
             }
             else {
@@ -47,18 +47,18 @@ sub _snac2xml {
             my $cdata = $_->{D};
             if ( $options->{USE_CDATA} ) {
                 $cdata = escapeCDATA($cdata);
-                $out .= prefix($prefix) . "<![CDATA[${cdata}]]>";
+                $out .= prefix($prefix, $options) . "<![CDATA[${cdata}]]>";
             }
             else {
                 $cdata = escapeHtml($cdata);
-                $out .= prefix($prefix) . "${cdata}";
+                $out .= prefix($prefix, $options) . "${cdata}";
             }
 
         }
         elsif ( $_->{M} ) {
             if ( $options->{SHOW_COMMENTS} ) {
                 my $comment = escapeComment( $_->{M} );
-                $out .= prefix($prefix) . "<!--${comment}-->";
+                $out .= prefix($prefix, $options) . "<!--${comment}-->";
             }
         }
         elsif ( $_->{L} ) {
@@ -67,7 +67,7 @@ sub _snac2xml {
                 my $languages = $options->{PI_LANGUAGES};
                 if ( grep( /$lang/, @$languages ) ) {
                     my $body = escapePIBody( $_->{B} );
-                    $out .= prefix($prefix) . "<?${lang} ${body}?>";
+                    $out .= prefix($prefix, $options) . "<?${lang} ${body}?>";
                 }
             }
         }
@@ -80,7 +80,7 @@ sub _snac2xml {
             if ( $options->{NORMALIZE_TEXT} ) {
                 $text =~ s/\s+/ /g;
             }
-            $out .= prefix($prefix) . "${text}";
+            $out .= prefix($prefix, $options) . "${text}";
         }
     }
 
@@ -88,16 +88,16 @@ sub _snac2xml {
 }
 
 sub attributesToXML {
-    my ( $atts, $prefix, $attPrefix ) = @_;
+    my ( $atts, $prefix, $attPrefix, $options ) = @_;
     my $out = "";
 
-    foreach $ns ( keys %$atts ) {
+    foreach my $ns ( keys %$atts ) {
         my %ns = %{ $atts->{$ns} };
-        foreach $name ( keys %ns ) {
+        foreach my $name ( keys %ns ) {
             if ( $ns == '@' ) {
                 my $value = escapeHtml( $atts->{$ns}->{$name} );
                 $out .=
-                  prefix( ${prefix} . ${attPrefix} ) . "${name}=\"${value}\"";
+                  prefix( ${prefix} . ${attPrefix} , $options) . "${name}=\"${value}\"";
             }
             else {
                 my $value = escapeHtml( $atts->{$ns}->{$name} );
@@ -111,7 +111,7 @@ sub attributesToXML {
 }
 
 sub prefix {
-    my ($prefix) = @_;
+    my ($prefix, $options) = @_;
     my $out = "";
 
     if ( $options->{USE_NEWLINES} ) {
